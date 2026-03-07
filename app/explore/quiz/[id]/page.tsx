@@ -3,6 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
+import { useParams } from "next/navigation"
 import { Compass } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -145,6 +146,9 @@ function optionLetter(index: number) {
 }
 
 export default function QuizPage() {
+    const params = useParams()
+    const targetId = params?.id as string
+
     const [quizIndex, setQuizIndex] = React.useState(0)
     // const quiz = DUMMY_QUIZZES[quizIndex]
 
@@ -159,7 +163,7 @@ export default function QuizPage() {
 
     // Fetch Quiz Data on Mount
     React.useEffect(() => {
-        const targetId = "94b58907-66ac-4213-bdff-21c6e8577963"
+        if (!targetId) return
 
         async function fetchQuiz() {
             try {
@@ -182,7 +186,7 @@ export default function QuizPage() {
         }
 
         fetchQuiz()
-    }, [quizIndex]) // For now quizIndex will just trigger a refetch of the same hardcoded ID
+    }, [targetId]) // Refetch if the ID from URL changes
 
     const results = React.useMemo(() => {
         if (!quiz) return { correct: 0, wrong: 0, unanswered: 0, total: 0 }

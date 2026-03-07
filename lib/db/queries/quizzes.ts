@@ -7,8 +7,7 @@ type Difficulty = "EASY" | "MEDIUM" | "HARD";
 // This interface reflects the JSON structure stored in the DB `content` field
 interface DBQuestion {
     q_no: number;
-    q_type: "image_mcq" | "sign_mcq";
-    q_text: string;
+    q_text?: string;
     q_gloss_id: number;
     options: number[];
 }
@@ -22,6 +21,7 @@ export async function getQuizzesList() {
         title: quiz.title,
         description: quiz.description,
         difficulty: quiz.difficulty,
+        type: quiz.type,
     }).from(quiz);
 
     return allQuizzes;
@@ -72,20 +72,25 @@ export async function getQuizById(id: string) {
         glossMap.set(numericId, {
             name: g.glossName,
             // Default to the predefined naming standard given by the user 
-            image_url: `/glosses/${numericId}.jpg`
+            image_url: `/glosses/${g.glossName}.jpg`
         });
     }
 
     // Hydrate questions based on their type
     const hydratedQuestions = dbQuestions.map(dbq => {
-        // Determine target type (fallback to first question type if missing)
-        const qType = dbq.q_type || (dbQuestions[0]?.q_type ?? 'image_mcq');
+        const qType = quizRecord.type; // Taken straight from the quiz parent row
 
         if (qType === 'image_mcq') {
             const correctName = glossMap.get(dbq.q_gloss_id)?.name || 'Unknown';
+            // Determine display text: if dbq.q_text is short, append the name
+            let displayText = dbq.q_text || "Identify the correct sign";
+            if (!displayText.includes(correctName) && !displayText.includes("'")) {
+                displayText = `${displayText} for '${correctName}'`;
+            }
+
             return {
                 q_no: dbq.q_no,
-                q_text: `Identify the correct sign for '${correctName}'`,
+                q_text: displayText,
                 correct_id: dbq.q_gloss_id,
                 options: dbq.options.map(optId => ({
                     id: optId,
@@ -112,7 +117,7 @@ export async function getQuizById(id: string) {
         title: quizRecord.title,
         description: quizRecord.description,
         difficulty: quizRecord.difficulty as Difficulty,
-        type: (dbQuestions[0]?.q_type ?? 'image_mcq') as "image_mcq" | "sign_mcq",
+        type: quizRecord.type as "image_mcq" | "sign_mcq",
         questions: hydratedQuestions
     };
 }

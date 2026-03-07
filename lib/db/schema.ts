@@ -36,6 +36,7 @@ export const quiz = pgTable("quiz", {
     createdBy: uuid("created_by"),
     content: jsonb().notNull(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow(),
+    type: quizType().default('image_mcq').notNull(),
 }, (table) => [
     foreignKey({
         columns: [table.createdBy],
@@ -122,3 +123,4 @@ export const groupMember = pgTable("group_member", {
     }).onDelete("cascade"),
     primaryKey({ columns: [table.groupId, table.userId], name: "group_member_pkey" }),
 ]);
+
