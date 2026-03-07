@@ -1,0 +1,50 @@
+﻿[dotenv@17.3.1] injecting env (3) from .env.local -- tip: ≡ƒñû agentic secret storage: https://dotenvx.com/as2
+[dotenv@17.3.1] injecting env (0) from .env.local -- tip: ΓÜí∩╕Å secrets for agents: https://dotenvx.com/as2
+--- FETCHING QUIZZES LIST ---
+node.exe : C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\src\pg-core\session.ts:73
+At line:1 char:1
++ & "C:\nvm4w\nodejs/node.exe" "C:\nvm4w\nodejs/node_modules/npm/bin/np ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\DEV\Project\...e\session.ts:73:String) [], Remo 
+   teException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+				throw new DrizzleQueryError(queryString, params, e as Error);
+				      ^
+
+DrizzleQueryError: Failed query: select "id", "title", "description", "difficulty", "type" from 
+"quiz"
+params: 
+    at PostgresJsPreparedQuery.queryWithCache 
+(C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\src\pg-core\session.ts:73:11)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async <anonymous> 
+(C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\src\postgres-js\session.ts:58:17)
+    at async getQuizzesList 
+(C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\lib\db\queries\quizzes.ts:20:24)
+    at async run (C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\scripts\test_quiz.ts:7:18) {
+  query: 'select "id", "title", "description", "difficulty", "type" from "quiz"',
+  params: [],
+  cause: PostgresError: column "type" does not exist
+      at ErrorResponse (C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\postgres\cjs\s
+rc\connection.js:815:30)
+      at handle 
+(C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\postgres\cjs\src\connection.js:489:6)
+      at Socket.data 
+(C:\DEV\Project\Final_Year\vak_setu_2\vaksetu\node_modules\postgres\cjs\src\connection.js:324:9)
+      at Socket.emit (node:events:508:28)
+      at addChunk (node:internal/streams/readable:559:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:510:3)
+      at Readable.push (node:internal/streams/readable:390:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    severity_local: 'ERROR',
+    severity: 'ERROR',
+    code: '42703',
+    position: '52',
+    file: 'parse_relation.c',
+    line: '3716',
+    routine: 'errorMissingColumn'
+  }
+}
+
+Node.js v24.13.0

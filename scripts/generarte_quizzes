@@ -1,0 +1,55 @@
+import json
+import os
+import random
+
+output_file = "supabase/migrations/20260227000001_add_random_quizzes.sql"
+
+# IDs 1-9 are numbers, 10-35 are A-Z
+ALL_GLOSS_IDS = list(range(1, 36))
+SYSTEM_ADMIN_ID = '00000000-0000-0000-0000-000000000000'
+
+def generate_quiz_questions(count=6):
+    questions = []
+    # Pick 6 unique glosses for this quiz
+    quiz_glosses = random.sample(ALL_GLOSS_IDS, count)
+    
+    for i, gloss_id in enumerate(quiz_glosses, 1):
+        # Pool for options: correct ID + 3 random distractors
+        wrong_options = random.sample([idx for idx in ALL_GLOSS_IDS if idx != gloss_id], 3)
+        options = wrong_options + [gloss_id]
+        random.shuffle(options)
+        
+        questions.append({
+            "q_no": i,
+            "q_text": "Identify the correct sign",
+            "q_gloss_id": gloss_id,
+            "options": options
+        })
+    return json.dumps({"questions": questions})
+
+# All titles set to EASY difficulty
+quiz_configs = [
+    ("Beginner Numbers 1", "Basic number practice", "EASY", "image_mcq"),
+    ("Beginner Numbers 2", "More basic number practice", "EASY", "image_mcq"),
+    ("Alphabet Intro 1", "Starting with letters", "EASY", "image_mcq"),
+    ("Sign Matcher 1", "Sign recognition basics", "EASY", "sign_mcq"),
+    ("Sign Matcher 2", "Quick sign identification", "EASY", "sign_mcq"),
+    ("Foundational Mix", "Mixed alphanumeric basics", "EASY", "sign_mcq"),
+]
+
+sql_statements = ["-- Auto-generated EASY Random Quizzes Seeding"]
+sql_template = "INSERT INTO public.quiz (title, description, difficulty, type, content, created_by) VALUES \n"
+
+entries = []
+for title, desc, diff, q_type in quiz_configs:
+    content = generate_quiz_questions(6)
+    entry = f"('{title}', '{desc}', '{diff}', '{q_type}', '{content}', '{SYSTEM_ADMIN_ID}')"
+    entries.append(entry)
+
+full_sql = sql_template + ",\n".join(entries) + ";"
+
+os.makedirs(os.path.dirname(output_file), exist_ok=True)
+with open(output_file, "w") as f:
+    f.write(full_sql)
+
+print(f"✅ Created 6 EASY quizzes in {output_file}")
