@@ -64,7 +64,7 @@ const data = {
         },
         {
           title: "Leaderboard",
-          url: "#",
+          url: "/explore/leaderboard",
         },
         {
           title: "Community",
