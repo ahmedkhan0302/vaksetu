@@ -304,7 +304,7 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
       </span>
         ) : status === "finished" ? (
             <span className="inline-flex items-center rounded-full border border-green-600/30 bg-green-600/5 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:text-green-400">
-        Saved
+        Transcribed
       </span>
         ) : null;
 
@@ -389,37 +389,9 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
             <div className="rounded-lg bg-muted/40 p-4">
                 <div className="mb-1 flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">Live transcript</p>
-
-                    <span
-                        className={[
-                            "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-medium",
-                            canTranscribe
-                                ? "border-green-600/40 bg-green-600/10 text-green-700 dark:text-green-400"
-                                : "border-border bg-background text-muted-foreground",
-                        ].join(" ")}
-                    >
-            {canTranscribe ? "Web Speech API" : "Not supported"}
-          </span>
                 </div>
 
                 <p className="text-sm text-foreground">{transcript || "—"}</p>
-            </div>
-
-            {/* Playback */}
-            <div className="rounded-lg bg-muted/40 p-4">
-                <p className="mb-2 text-xs text-muted-foreground">Recorded audio</p>
-                {status === "error" ? (
-                    <p className="text-sm text-destructive">{error}</p>
-                ) : audioUrl ? (
-                    <audio controls src={audioUrl} className="w-full" />
-                ) : (
-                    <p className="text-sm text-muted-foreground">No recording yet.</p>
-                )}
-                {audioBlob ? (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                        Size: {(audioBlob.size / 1024).toFixed(1)} KB Type: {audioBlob.type || "unknown"}
-                    </p>
-                ) : null}
             </div>
         </div>
     );

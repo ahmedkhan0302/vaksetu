@@ -17,7 +17,7 @@ type DictionaryCardProps = {
 
 export function DictionaryCard({ entry, onTagClick }: DictionaryCardProps) {
     return (
-        <article className="group overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition hover:shadow-md">
+        <article className="group overflow-hidden rounded-2xl border border-border bg-background shadow-sm transition hover:shadow-md hover:border-b-3 hover:border-green-500">
             <div className="relative h-44 w-full overflow-hidden bg-muted">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img

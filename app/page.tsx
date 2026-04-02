@@ -132,14 +132,6 @@ export default function Page() {
                             ) : (
                                 <div className="space-y-3">
                                     <SignAvatar />
-                                    <div className="rounded-lg bg-muted/40 p-4">
-                                        <p className="text-xs text-muted-foreground mb-1">
-                                            Recognized speech (for driving signs later)
-                                        </p>
-                                        <p className="text-sm text-foreground">
-                                            {speechText || "—"}
-                                        </p>
-                                    </div>
                                 </div>
                             )}
                         </section>
