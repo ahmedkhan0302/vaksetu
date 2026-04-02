@@ -38,16 +38,6 @@ const data = {
       url: "/",
       icon: Languages,
       isActive: true,
-      items: [
-        {
-          title: "Sign to Speech",
-          url: "#",
-        },
-        {
-          title: "Speech to Sign",
-          url: "#",
-        },
-      ],
     },
     {
       title: "Explore",
