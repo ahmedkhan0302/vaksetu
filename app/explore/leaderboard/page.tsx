@@ -6,8 +6,6 @@ import { Trophy } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AuthGate } from "@/components/auth/auth-gate"
-
 export default function LeaderboardPage() {
     const header = (
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -21,7 +19,7 @@ export default function LeaderboardPage() {
     )
 
     return (
-        <AuthGate>
+        <>
             {header}
 
             <div className="flex flex-1 flex-col p-4 pt-0">
@@ -39,6 +37,6 @@ export default function LeaderboardPage() {
                     </Card>
                 </div>
             </div>
-        </AuthGate>
+        </>
     )
 }

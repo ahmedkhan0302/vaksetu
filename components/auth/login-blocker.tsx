@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { setClientUser } from "@/lib/auth/client"
+import { login, signup } from "@/lib/auth/actions"
 
 type Mode = "login" | "signup"
 
@@ -52,12 +52,22 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
 
         setLoading(true)
         try {
-            await new Promise((r) => setTimeout(r, 500))
-            setClientUser({ id: "demo-user", email })
-            onAuthed()
+            const formData = new FormData()
+            formData.append("email", email)
+            formData.append("password", password)
+
+            const action = isSignup ? signup : login
+            const result = await action(formData)
+
+            if (result.error) {
+                setError(result.error)
+            } else if (result.success) {
+                setMode("login") // explicitly ensure we switch back to login mode if signup or just auth
+                onAuthed()
+            }
         } catch (err: unknown) {
             const e = err as { message?: string }
-            setError(e.message ?? "Login failed.")
+            setError(e.message ?? "Authentication failed.")
         } finally {
             setLoading(false)
         }
@@ -144,8 +154,7 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                             onClick={async () => {
                                 setLoading(true)
                                 await new Promise((r) => setTimeout(r, 300))
-                                setClientUser({ id: "demo-user", email: "google@example.com" })
-                                onAuthed()
+                                alert("Google login is not yet implemented.")
                                 setLoading(false)
                             }}
                         >
