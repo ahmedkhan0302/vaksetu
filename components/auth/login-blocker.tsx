@@ -74,10 +74,10 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                 <CardContent>
                     <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="login" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+                            <TabsTrigger value="login" className="data-[state=active]:bg-green-800 data-[state=active]:text-white">
                                 Login
                             </TabsTrigger>
-                            <TabsTrigger value="signup" className="data-[state=active]:bg-green-600 data-[state=active]:text-white">
+                            <TabsTrigger value="signup" className="data-[state=active]:bg-green-800 data-[state=active]:text-white">
                                 Sign up
                             </TabsTrigger>
                         </TabsList>
@@ -97,7 +97,7 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="focus-visible:ring-green-600"
+                                className="focus-visible:ring-green-950"
                                 autoComplete="email"
                                 required
                                 autoFocus
@@ -111,7 +111,7 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                                 type="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="focus-visible:ring-green-600"
+                                className="focus-visible:ring-green-950"
                                 autoComplete={isSignup ? "new-password" : "current-password"}
                                 required
                             />
@@ -125,21 +125,21 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                                     type="password"
                                     value={confirmPassword}
                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                    className="focus-visible:ring-green-600"
+                                    className="focus-visible:ring-green-950"
                                     autoComplete="new-password"
                                     required
                                 />
                             </div>
                         ) : null}
 
-                        <Button className="bg-green-600 hover:bg-green-700" type="submit" disabled={loading}>
+                        <Button className="bg-green-800 hover:bg-green-950" type="submit" disabled={loading}>
                             {loading ? "Please wait..." : isSignup ? "Create account" : "Login"}
                         </Button>
 
                         <Button
                             type="button"
                             variant="outline"
-                            className="border-green-600 text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                            className="border-green-800 text-green-800 hover:bg-green-600 hover:text-white"
                             disabled={loading}
                             onClick={async () => {
                                 setLoading(true)

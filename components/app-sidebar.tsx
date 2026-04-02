@@ -72,7 +72,7 @@ const data = {
         },
         {
           title: "Dictionary",
-          url: "#",
+          url: "/explore/dictionary",
         },
       ],
     },
