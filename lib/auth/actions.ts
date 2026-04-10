@@ -34,13 +34,18 @@ export async function signup(formData: FormData) {
     return { error: 'Email and password are required' }
   }
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
   })
 
   if (error) {
     return { error: error.message }
+  }
+
+  // Supabase auth.signUp returns data.user, but if email confirmations are enabled, data.session is null.
+  if (data.user && !data.session) {
+    return { error: "Signup successful, but 'Confirm Email' is enabled in your Supabase project. Please check your inbox or disable 'Confirm Email' in Supabase settings." }
   }
 
   return { success: true }
