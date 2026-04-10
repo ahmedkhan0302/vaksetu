@@ -102,7 +102,11 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={async () => {
+              const { logout } = await import("@/lib/auth/actions")
+              await logout()
+              window.location.reload()
+            }}>
               <LogOut />
               Log out
             </DropdownMenuItem>

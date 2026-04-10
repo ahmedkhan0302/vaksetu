@@ -62,8 +62,10 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
             if (result.error) {
                 setError(result.error)
             } else if (result.success) {
-                setMode("login") // explicitly ensure we switch back to login mode if signup or just auth
+                setMode("login")
                 onAuthed()
+                // Force reload so next/cache recognizes the new cookies and client components refresh
+                window.location.reload()
             }
         } catch (err: unknown) {
             const e = err as { message?: string }
