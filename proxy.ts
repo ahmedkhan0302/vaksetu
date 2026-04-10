@@ -1,7 +1,7 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   // Option B: Just refresh the session to keep it alive.
   // The actual blocking (LoginBlocker overlay) will be handled by
   // the <AuthGate> component in protected layouts on the client/server side.
