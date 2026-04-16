@@ -3,12 +3,13 @@
 import * as React from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Compass } from "lucide-react"
+import { Compass, ChevronLeft } from "lucide-react"
 
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 type Difficulty = "EASY" | "MEDIUM" | "HARD"
 
@@ -46,82 +47,9 @@ type SignMCQ = BaseQuiz & {
 
 type Quiz = ImageMCQ | SignMCQ
 
-/**
- * Adjust this ONE function to match how your files are named in /public/glosses.
- * Examples:
- *  - /public/glosses/S.jpg  -> return `/glosses/${name}.jpg`
- *  - /public/glosses/S.png  -> return `/glosses/${name}.png`
- */
 function glossImageUrlByName(name: string) {
     return `/glosses/${name}.jpg`
 }
-
-const DUMMY_QUIZZES: Quiz[] = [
-    {
-        id: "5b3e3bee-cefe-41df-bb9d-ca8ab009e52d",
-        title: "Beginner Numbers 1",
-        description: "Basic number practice",
-        difficulty: "EASY",
-        type: "image_mcq",
-        questions: [
-            {
-                q_no: 1,
-                q_text: "Identify the correct sign for '6'",
-                correct_id: 6,
-                options: [
-                    { id: 8, name: "8" },
-                    { id: 3, name: "3" },
-                    { id: 7, name: "7" },
-                    { id: 6, name: "6" },
-                ],
-            },
-            {
-                q_no: 2,
-                q_text: "Identify the correct sign for '2'",
-                correct_id: 5,
-                options: [
-                    { id: 1, name: "1" },
-                    { id: 9, name: "9" },
-                    { id: 5, name: "5" },
-                    { id: 2, name: "2" },
-                ],
-            },
-        ],
-    },
-    {
-        id: "0f2b6f6d-2a2e-4c7d-9d5e-1f5e2f0a0001",
-        title: "Identify the sign (demo)",
-        description: "Sign image -> choose the correct gloss (sample labels)",
-        difficulty: "EASY",
-        type: "sign_mcq",
-        questions: [
-            {
-                q_no: 1,
-                // If your sign_mcq questions also come from gloss ids later,
-                // you can use the same helper: question_image: glossImageUrlById(101)
-                question_image: "/glosses/Z.jpg",
-                correct_id: 103,
-                options: [
-                    { id: 101, name: "Q" },
-                    { id: 102, name: "R" },
-                    { id: 103, name: "Z" },
-                    { id: 104, name: "P" },
-                ],
-            },
-            {
-                q_no: 2,
-                question_image: "/glosses/Y.jpg",
-                correct_id: 102,
-                options: [
-                    { id: 101, name: "U" },
-                    { id: 102, name: "Y" },
-                    { id: 105, name: "N" },
-                    { id: 106, name: "G" },
-                ],
-            },
-        ],
-    },
-]
 
 type AnswerMap = Record<number, number | null>
 
@@ -129,6 +57,9 @@ function computeResults(quiz: Quiz, answers: AnswerMap) {
     let correct = 0
     let wrong = 0
     let unanswered = 0
+
+    // Only compute if quiz has valid questions array
+    if (!quiz.questions || quiz.questions.length === 0) return { correct, wrong, unanswered, total: 0 }
 
     for (const q of quiz.questions) {
         const selected = answers[q.q_no]
@@ -145,33 +76,68 @@ function optionLetter(index: number) {
 }
 
 export default function QuizPage() {
-    const [quizIndex, setQuizIndex] = React.useState(0)
-    // const quiz = DUMMY_QUIZZES[quizIndex]
+    // List View State
+    const [quizzesList, setQuizzesList] = React.useState<BaseQuiz[]>([])
+    const [isLoadingList, setIsLoadingList] = React.useState(true)
+    const [listError, setListError] = React.useState<string | null>(null)
+
+    const [selectedQuizId, setSelectedQuizId] = React.useState<string | null>(null)
 
     // Live Quiz State
     const [quiz, setQuiz] = React.useState<Quiz | null>(null)
-    const [isLoading, setIsLoading] = React.useState(true)
+    const [isLoading, setIsLoading] = React.useState(false)
     const [error, setError] = React.useState<string | null>(null)
 
     const [questionIndex, setQuestionIndex] = React.useState(0)
     const [answers, setAnswers] = React.useState<AnswerMap>({})
     const [showResults, setShowResults] = React.useState(false)
 
-    // Fetch Quiz Data on Mount
+    // Fetch Quiz List on Mount
     React.useEffect(() => {
-        const targetId = "94b58907-66ac-4213-bdff-21c6e8577963"
+        async function fetchList() {
+            try {
+                setIsLoadingList(true)
+                const res = await fetch(`/api/quiz`)
+                if (!res.ok) throw new Error("Failed to fetch quizzes")
+                const data: BaseQuiz[] = await res.json()
+                
+                // Ensure data is sorted so the flow makes sense
+                const sorted = data.sort((a,b) => a.title.localeCompare(b.title))
+                setQuizzesList(sorted)
+            } catch (err: any) {
+                console.error(err)
+                setListError(err.message)
+            } finally {
+                setIsLoadingList(false)
+            }
+        }
+
+        fetchList()
+    }, [])
+
+    // Fetch specific Quiz when selected
+    React.useEffect(() => {
+        if (!selectedQuizId) return
 
         async function fetchQuiz() {
             try {
                 setIsLoading(true)
-                const res = await fetch(`/api/quiz/${targetId}`)
-                if (!res.ok) throw new Error("Failed to fetch quiz")
+                setError(null)
+                const res = await fetch(`/api/quiz/${selectedQuizId}`)
+                if (!res.ok) throw new Error("Failed to fetch quiz details")
                 const data: Quiz = await res.json()
                 setQuiz(data)
 
                 // Reset states for the new quiz
                 setQuestionIndex(0)
-                setAnswers(Object.fromEntries(data.questions.map((q) => [q.q_no, null])))
+                
+                // Fallback structure in case questions are empty
+                if (data.questions && data.questions.length > 0) {
+                    setAnswers(Object.fromEntries(data.questions.map((q) => [q.q_no, null])))
+                } else {
+                    setAnswers({})
+                }
+                
                 setShowResults(false)
             } catch (err: any) {
                 console.error(err)
@@ -182,23 +148,127 @@ export default function QuizPage() {
         }
 
         fetchQuiz()
-    }, [quizIndex]) // For now quizIndex will just trigger a refetch of the same hardcoded ID
+    }, [selectedQuizId])
 
     const results = React.useMemo(() => {
         if (!quiz) return { correct: 0, wrong: 0, unanswered: 0, total: 0 }
         return computeResults(quiz, answers)
     }, [quiz, answers])
 
+    // Common Header functionality
+    const header = (
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 border-b">
+            <div className="flex items-center gap-2 px-4 w-full">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                <Compass className="size-4 text-muted-foreground shrink-0" />
+                <h1 className="text-lg font-semibold leading-none mr-auto">Quizzes</h1>
+                
+                {selectedQuizId && (
+                    <Button variant="outline" size="sm" onClick={() => setSelectedQuizId(null)} className="ml-auto">
+                        <ChevronLeft className="mr-1 size-4" />
+                        Exit Quiz
+                    </Button>
+                )}
+            </div>
+        </header>
+    )
+
+    // Render logic based on List vs Player
+    if (!selectedQuizId) {
+        return (
+            <>
+                {header}
+                <div className="flex flex-1 flex-col p-4 pt-6">
+                    <div className="mx-auto w-full max-w-5xl">
+                        <div className="mb-6">
+                            <h2 className="text-2xl font-semibold">Available Quizzes</h2>
+                            <p className="text-sm text-muted-foreground mt-1">Select a quiz to test your abilities.</p>
+                        </div>
+                        
+                        {isLoadingList ? (
+                            <div className="py-20 text-center text-muted-foreground">Loading quizzes...</div>
+                        ) : listError ? (
+                            <div className="py-20 text-center text-red-500">Error: {listError}</div>
+                        ) : quizzesList.length === 0 ? (
+                            <div className="py-20 text-center text-muted-foreground">No quizzes available</div>
+                        ) : (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {quizzesList.map((q) => {
+                                    const diffLower = q.difficulty.toLowerCase()
+                                    const diffClass = 
+                                        diffLower === 'easy' ? 'bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20' : 
+                                        diffLower === 'medium' ? 'bg-amber-500/10 text-amber-700 hover:bg-amber-500/20' : 
+                                        'bg-red-500/10 text-red-700 hover:bg-red-500/20'
+                                    
+                                    const typeName = q.type.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')
+
+                                    return (
+                                        <Card 
+                                            key={q.id} 
+                                            className="flex flex-col p-5 cursor-pointer transition-all hover:border-green-500/40 hover:shadow-sm" 
+                                            onClick={() => setSelectedQuizId(q.id)}
+                                        >
+                                            <div className="flex items-start justify-between gap-3 mb-2">
+                                                <h3 className="font-semibold text-lg line-clamp-2 leading-tight">{q.title}</h3>
+                                                <Badge variant="secondary" className={`shrink-0 ${diffClass}`}>
+                                                    {q.difficulty}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground mb-6 flex-1">{q.description}</p>
+                                            <div className="flex items-center text-xs font-medium text-muted-foreground bg-muted/60 w-fit px-2.5 py-1 rounded-md">
+                                                {typeName}
+                                            </div>
+                                        </Card>
+                                    )
+                                })}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </>
+        )
+    }
+
+    // Now we must be in active Quiz View
     if (isLoading) {
-        return <div className="p-8 text-center text-muted-foreground">Loading quiz...</div>
+        return (
+            <>
+                {header}
+                <div className="p-8 text-center text-muted-foreground">Loading quiz payload...</div>
+            </>
+        )
     }
 
     if (error || !quiz) {
-        return <div className="p-8 text-center text-red-500">Error: {error || "Quiz not found"}</div>
+        return (
+            <>
+                {header}
+                <div className="p-8 text-center text-red-500">Error: {error || "Quiz not found"}</div>
+            </>
+        )
+    }
+    
+    // Safety check if quiz contains questions
+    if (!quiz.questions || quiz.questions.length === 0) {
+        return (
+            <>
+                {header}
+                <div className="p-8 text-center text-muted-foreground">
+                    This quiz currently has no questions configured.
+                </div>
+            </>
+        )
     }
 
-    const progressPct = quiz ? Math.round(((questionIndex + 1) / quiz.questions.length) * 100) : 0
-    const isLastQuestion = quiz ? questionIndex === quiz.questions.length - 1 : false
+    const progressPct = quiz.questions.length > 0 ? Math.round(((questionIndex + 1) / quiz.questions.length) * 100) : 0
+    const isLastQuestion = quiz.questions.length > 0 ? questionIndex === quiz.questions.length - 1 : false
+
+    // To figure out if it has next quiz
+    const currentIndexInList = quizzesList.findIndex(q => q.id === quiz.id)
+    const hasNextQuiz = currentIndexInList !== -1 && currentIndexInList < quizzesList.length - 1
+
+    const canGoNextQuiz = results.correct >= Math.ceil(results.total / 2)
 
     function selectOption(qNo: number, optionId: number) {
         setAnswers((prev) => ({ ...prev, [qNo]: optionId }))
@@ -221,31 +291,15 @@ export default function QuizPage() {
     }
 
     function goToNextQuiz() {
-        const hasNext = quizIndex < DUMMY_QUIZZES.length - 1
-        if (!hasNext) return
-        setQuizIndex((i) => i + 1)
+        if (!hasNextQuiz) return
+        setSelectedQuizId(quizzesList[currentIndexInList + 1].id)
     }
-
-    const canGoNextQuiz = results.correct >= Math.ceil(results.total / 2)
-    const hasNextQuiz = quizIndex < DUMMY_QUIZZES.length - 1
-
-    const header = (
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-            <div className="flex items-center gap-2 px-4">
-                <SidebarTrigger className="-ml-1" />
-                <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
-                <Compass className="size-4 text-muted-foreground" />
-                <h1 className="text-lg font-semibold leading-none">Quiz</h1>
-            </div>
-        </header>
-    )
 
     if (showResults) {
         return (
             <>
                 {header}
-
-                <div className="flex flex-1 flex-col p-4 pt-0">
+                <div className="flex flex-1 flex-col p-4 pt-6">
                     <div className="mx-auto w-full max-w-3xl">
                         <div className="flex items-center justify-between gap-3">
                             <div>
@@ -301,13 +355,15 @@ export default function QuizPage() {
                                     <Link href="/explore/leaderboard">Visit leaderboard</Link>
                                 </Button>
 
-                                <Button
-                                    onClick={goToNextQuiz}
-                                    className="bg-green-600 hover:bg-green-700"
-                                    disabled={!hasNextQuiz || !canGoNextQuiz}
-                                >
-                                    Next
-                                </Button>
+                                {hasNextQuiz && (
+                                    <Button
+                                        onClick={goToNextQuiz}
+                                        className="bg-green-600 hover:bg-green-700"
+                                        disabled={!canGoNextQuiz}
+                                    >
+                                        Next Quiz
+                                    </Button>
+                                )}
                             </div>
                         </Card>
                     </div>
@@ -320,7 +376,7 @@ export default function QuizPage() {
         <>
             {header}
 
-            <div className="flex flex-1 flex-col p-4 pt-0">
+            <div className="flex flex-1 flex-col p-4 pt-6">
                 <div className="mx-auto w-full max-w-3xl">
                     <div className="flex items-center justify-between gap-3">
                         <div>
@@ -328,7 +384,7 @@ export default function QuizPage() {
                             <p className="text-sm text-muted-foreground">{quiz.description}</p>
                         </div>
                         <div className="text-sm text-muted-foreground">
-                            Q{questionIndex + 1}/{quiz.questions.length} • Quiz {quizIndex + 1}/{DUMMY_QUIZZES.length}
+                            Q{questionIndex + 1}/{quiz.questions.length} • Quiz {currentIndexInList + 1}/{quizzesList.length}
                         </div>
                     </div>
 
@@ -358,8 +414,6 @@ export default function QuizPage() {
                                                 const isSelected = selected === opt.id
                                                 const letter = optionLetter(optIndex)
 
-                                                // If backend provides image_url later, it will use that.
-                                                // Otherwise, we derive it from gloss name based on /public/glosses.
                                                 const src = opt.image_url ?? glossImageUrlByName(opt.name)
 
                                                 return (
@@ -374,7 +428,7 @@ export default function QuizPage() {
                                                                 : "hover:border-green-400/60 hover:ring-4 hover:ring-green-400/10",
                                                         ].join(" ")}
                                                     >
-                                                        <div className="relative aspect-4/3 w-full bg-gray-900">
+                                                        <div className="relative aspect-4/3 w-full bg-gray-900 border-b">
                                                             <Image
                                                                 src={src}
                                                                 alt={`Option ${letter}`}
@@ -424,7 +478,7 @@ export default function QuizPage() {
                                                         type="button"
                                                         onClick={() => selectOption(current.q_no, opt.id)}
                                                         className={[
-                                                            "w-full rounded-lg border p-4 text-left transition",
+                                                            "w-full rounded-lg border p-4 text-left transition text-sm font-medium",
                                                             isSelected
                                                                 ? "border-green-500 bg-green-500/10"
                                                                 : "hover:border-green-400/60 hover:bg-muted",
