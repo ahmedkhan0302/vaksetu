@@ -7,6 +7,7 @@ type RecorderStatus = "idle" | "recording" | "finished" | "error";
 type Props = {
     maxDurationMs?: number;
     defaultLang?: string;
+    onRecordingComplete?: (text: string) => void;
 };
 
 function clamp01(n: number) {
@@ -33,7 +34,7 @@ const LANG_OPTIONS: Array<{ code: string; label: string }> = [
     { code: "or-IN", label: "Odia" },
 ];
 
-export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US" }: Props) {
+export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US", onRecordingComplete }: Props) {
     const [lang, setLang] = useState<string>(defaultLang);
 
     const [status, setStatus] = useState<RecorderStatus>("idle");
@@ -295,6 +296,12 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    useEffect(() => {
+        if (status === "finished" && onRecordingComplete) {
+            onRecordingComplete(transcript);
+        }
+    }, [status, transcript, onRecordingComplete]);
+
     const secondsLeft = Math.ceil(remainingMs / 1000);
 
     const statusPill =
@@ -358,41 +365,61 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                 </div>
             </div>
 
-            {/* Loudness meter + bars */}
-            <div className="rounded-lg bg-muted/40 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Input level</p>
-                    <p className="text-xs text-muted-foreground">
-                        {status === "recording" ? `${Math.round(level * 100)}%` : "—"}
-                    </p>
+            {/* Initial Blank State (Optional placeholder) */}
+            {status === "idle" && (
+                <div className="rounded-lg bg-muted/20 p-8 flex flex-col items-center justify-center border border-dashed border-border/50 text-muted-foreground">
+                    <p className="text-sm">Click Record to start capturing speech</p>
                 </div>
+            )}
 
-                <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                        className="h-full bg-green-600/70 transition-[width] duration-100"
-                        style={{ width: `${Math.round(level * 100)}%` }}
-                    />
+            {/* Live Recording Phase: Loudness meter + Live Transcript */}
+            {status === "recording" && (
+                <>
+                    <div className="rounded-lg bg-muted/40 p-4 animate-in fade-in zoom-in duration-300">
+                        <div className="mb-2 flex items-center justify-between">
+                            <p className="text-xs text-muted-foreground">Input level</p>
+                            <p className="text-xs text-muted-foreground">
+                                {`${Math.round(level * 100)}%`}
+                            </p>
+                        </div>
+                        <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                                className="h-full bg-green-600/70 transition-[width] duration-100"
+                                style={{ width: `${Math.round(level * 100)}%` }}
+                            />
+                        </div>
+                        <div className="mt-3 flex h-10 items-end gap-1">
+                            {bars.map((b, idx) => (
+                                <div
+                                    key={idx}
+                                    className="w-full rounded-sm bg-green-600/50"
+                                    style={{ height: `${Math.max(3, Math.round(b * 40))}px` }}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {transcript && (
+                        <div className="rounded-lg bg-muted/40 p-4 animate-in fade-in duration-300">
+                            <div className="mb-1 flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground">Live transcript</p>
+                            </div>
+                            <p className="text-sm text-foreground">{transcript}</p>
+                        </div>
+                    )}
+                </>
+            )}
+
+            {/* Finished Phase: Final Compiled Text Only */}
+            {status === "finished" && (
+                <div className="rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-600/30 p-4 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-green-700 dark:text-green-500">Final Transcript</p>
+                        <p className="text-[10px] text-muted-foreground font-mono bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full">Ready to animate</p>
+                    </div>
+                    <p className="text-sm text-foreground my-2 leading-relaxed">{transcript || "No speech detected. Please try recording again."}</p>
                 </div>
-
-                <div className="mt-3 flex h-10 items-end gap-1">
-                    {bars.map((b, idx) => (
-                        <div
-                            key={idx}
-                            className="w-full rounded-sm bg-green-600/50"
-                            style={{ height: `${Math.max(3, Math.round(b * 40))}px` }}
-                        />
-                    ))}
-                </div>
-            </div>
-
-            {/* Transcript */}
-            <div className="rounded-lg bg-muted/40 p-4">
-                <div className="mb-1 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Live transcript</p>
-                </div>
-
-                <p className="text-sm text-foreground">{transcript || "—"}</p>
-            </div>
+            )}
         </div>
     );
 }

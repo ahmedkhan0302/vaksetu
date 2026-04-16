@@ -12,7 +12,7 @@ type Mode = "sign-to-text" | "speech-to-sign";
 
 export default function Page() {
     const [mode, setMode] = useState<Mode>("sign-to-text");
-    const [speechText] = useState("");
+    const [speechText, setSpeechText] = useState("");
 
     const isSignToText = mode === "sign-to-text";
 
@@ -91,7 +91,7 @@ export default function Page() {
                             {isSignToText ? (
                                 <CameraPreview />
                             ) : (
-                                <AudioRecorderCard />
+                                <AudioRecorderCard onRecordingComplete={setSpeechText} />
                             )}
                         </section>
 
