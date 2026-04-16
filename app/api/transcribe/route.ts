@@ -27,22 +27,28 @@ function findFirstFile(dir: string): string | null {
 async function translateToEnglish(text: string, sourceLang: string): Promise<string> {
     if (!text || text.trim() === '') return '';
     try {
+        const payload = {
+            input: text.trim(),
+            source_language_code: sourceLang || 'hi-IN',
+            target_language_code: 'en-IN',
+            model: 'sarvam-translate:v1'
+        };
+        
         const response = await fetch('https://api.sarvam.ai/translate', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'api-subscription-key': process.env.SARVAM_API_KEY || ''
             },
-            body: JSON.stringify({
-                input: text.trim(),
-                source_language_code: sourceLang || 'hi-IN',
-                target_language_code: 'en-IN',
-                speaker_gender: 'Male',
-                mode: 'formal',
-                model: 'sarvam-translate'
-            })
+            body: JSON.stringify(payload)
         });
         const data = await response.json();
+        
+        if (!response.ok) {
+            console.error("Translation returned an error from Sarvam:", data);
+            return `[Translation API Error: ${JSON.stringify(data)}]`;
+        }
+        
         return data.translated_text || `[Translation Placeholder for: ${text}]`;
     } catch (err) {
         console.error("Translation error:", err);
@@ -137,17 +143,12 @@ export async function POST(request: Request) {
            if (fs.existsSync(outDir)) fs.rmSync(outDir, { recursive: true, force: true });
         } catch(err) {}
 
-        // Automatically chain the English Server Translation
-        let translated = extractedNativeText;
-        if (language && !language.startsWith('en') && !extractedNativeText.startsWith("Error")) {
-            translated = await translateToEnglish(extractedNativeText, language);
-        }
-
+        // Note: No automatic translation here. The frontend is requested to trigger /translate step 2 manually!
         return NextResponse.json({ 
             result: {
                 engine: 'sarvam',
                 native_text: extractedNativeText,
-                english_text: translated
+                english_text: ""
             }
         });
     }
