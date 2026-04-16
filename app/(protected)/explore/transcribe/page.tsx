@@ -1,182 +1,31 @@
 "use client"
 
 import * as React from "react"
-import { Mic, Square, Loader2 } from "lucide-react"
+import { Mic, Square, Loader2, Clock } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
+import { useTranscription } from "@/lib/hooks/useTranscription"
 
-// WAV encoding helper
-function encodeWAV(samples: Float32Array, sampleRate = 16000) {
-  const buffer = new ArrayBuffer(44 + samples.length * 2)
-  const view = new DataView(buffer)
-  
-  const writeString = (v: DataView, offset: number, str: string) => {
-    for (let i = 0; i < str.length; i++) {
-        v.setUint8(offset + i, str.charCodeAt(i))
-    }
-  }
-
-  /* RIFF identifier */ writeString(view, 0, 'RIFF')
-  /* RIFF chunk length */ view.setUint32(4, 36 + samples.length * 2, true)
-  /* RIFF type */ writeString(view, 8, 'WAVE')
-  /* format chunk identifier */ writeString(view, 12, 'fmt ')
-  /* format chunk length */ view.setUint32(16, 16, true)
-  /* sample format (raw) */ view.setUint16(20, 1, true)
-  /* channel count */ view.setUint16(22, 1, true)
-  /* sample rate */ view.setUint32(24, sampleRate, true)
-  /* byte rate */ view.setUint32(28, sampleRate * 2, true)
-  /* block align */ view.setUint16(32, 2, true)
-  /* bits per sample */ view.setUint16(34, 16, true)
-  /* data chunk identifier */ writeString(view, 36, 'data')
-  /* data chunk length */ view.setUint32(40, samples.length * 2, true)
-
-  let offset = 44
-  for (let i = 0; i < samples.length; i++, offset += 2) {
-    const s = Math.max(-1, Math.min(1, samples[i]))
-    view.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
-  }
-  return buffer
-}
+const ACTIVE_STT_ENGINE = 'sarvam'; // 'sarvam' or 'webspeech'
 
 export default function TranscribePage() {
-    const [engine, setEngine] = React.useState('sarvam')
-    const [language, setLanguage] = React.useState('unknown')
-    
-    const [recording, setRecording] = React.useState(false)
-    const [processing, setProcessing] = React.useState(false)
-    const [transcription, setTranscription] = React.useState<any>(null)
-    const [error, setError] = React.useState<string | null>(null)
-    
-    const mediaRecorderRef = React.useRef<MediaRecorder | null>(null)
-    const recognitionRef = React.useRef<any>(null)
-    const chunksRef = React.useRef<Blob[]>([])
+    const [language, setLanguage] = React.useState('hi-IN') // Default to Hindi to test translation
 
-    const startRecording = async () => {
-        setError(null)
-        setTranscription(null)
+    // Using a 20 second hard limit (20,000ms)
+    const { 
+        startRecording, 
+        stopRecording, 
+        isRecording, 
+        isProcessing, 
+        error, 
+        result, 
+        timeRemainingMs
+    } = useTranscription(ACTIVE_STT_ENGINE, language, 20000)
 
-        if (engine === 'webspeech') {
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                setError("Your browser does not support Web Speech API.");
-                return;
-            }
-            
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            // Web speech works best with specific BCP-47 tags
-            recognition.lang = language === 'unknown' ? 'en-US' : language; 
-
-            let finalTranscript = '';
-            recognition.onresult = (event: any) => {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
-                    }
-                }
-                
-                setTranscription({
-                    engine: "Web Speech API",
-                    status: "recording",
-                    final_transcript: finalTranscript,
-                    interim_transcript: interimTranscript || undefined
-                })
-            };
-
-            recognition.onerror = (event: any) => {
-                setError(`Web Speech error: ${event.error}`);
-                setRecording(false);
-            };
-
-            recognition.onend = () => {
-                setRecording(false);
-                setTranscription((prev: any) => prev ? { ...prev, status: "completed" } : null)
-            };
-
-            try {
-                recognition.start();
-                setRecording(true);
-                recognitionRef.current = recognition;
-            } catch(e: any) {
-                setError(e.message)
-            }
-            return;
-        }
-
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-            const mr = new MediaRecorder(stream)
-            mr.ondataavailable = (e) => {
-                if (e.data.size > 0) chunksRef.current.push(e.data)
-            }
-            mr.onstop = processAudio
-            chunksRef.current = []
-            mr.start()
-            setRecording(true)
-            mediaRecorderRef.current = mr
-        } catch (err: any) {
-            setError("Could not access microphone.")
-        }
-    }
-
-    const stopRecording = () => {
-        if (engine === 'webspeech') {
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
-            }
-            return;
-        }
-
-        if (mediaRecorderRef.current) {
-            mediaRecorderRef.current.stop()
-            setRecording(false)
-            mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop())
-        }
-    }
-
-    const processAudio = async () => {
-        setProcessing(true)
-        try {
-            const blob = new Blob(chunksRef.current)
-            const arrayBuffer = await blob.arrayBuffer()
-            
-            const actx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 })
-            const audioBuffer = await actx.decodeAudioData(arrayBuffer)
-            
-            const float32Array = audioBuffer.getChannelData(0)
-            const wavBuffer = encodeWAV(float32Array, 16000)
-            
-            let binary = ''
-            const bytes = new Uint8Array(wavBuffer)
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i])
-            }
-            const base64Audio = window.btoa(binary)
-            
-            const response = await fetch('/api/transcribe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ audioBase64: base64Audio, language })
-            })
-            
-            const data = await response.json()
-            if (!response.ok) {
-                throw new Error(data.error || "Server error")
-            }
-            
-            setTranscription(data.result)
-        } catch (err: any) {
-            setError(err.message || "An error occurred.")
-        } finally {
-            setProcessing(false)
-        }
-    }
+    // Calculate how many seconds left nicely
+    const secondsRemaining = Math.max(0, Math.ceil(timeRemainingMs / 1000));
 
     return (
         <>
@@ -193,33 +42,23 @@ export default function TranscribePage() {
                 <div className="mx-auto w-full max-w-2xl mt-4">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Dual-Engine Transcription</CardTitle>
-                            <CardDescription>Select your desired engine and language, then speak into your mic.</CardDescription>
+                            <CardTitle>Unified Transcription Engine</CardTitle>
+                            <CardDescription>
+                                Speak into your microphone to transcribe and translate audio in completely secure bursts.
+                            </CardDescription>
                         </CardHeader>
                         <CardContent className="flex flex-col items-center gap-4 text-center">
                             
-                            <div className="flex w-full gap-4 mb-4 flex-col sm:flex-row justify-center">
+                            {/* Disabled Dropdowns while anything is running */}
+                            <div className="flex w-full mb-4 justify-center">
                                <div className="flex flex-col gap-1 items-start text-sm w-full sm:w-1/2">
-                                  <label className="font-semibold text-muted-foreground">Provider Engine</label>
-                                  <select 
-                                      className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background" 
-                                      value={engine} 
-                                      onChange={e => setEngine(e.target.value)}
-                                      disabled={recording || processing}
-                                  >
-                                      <option value="sarvam">Sarvam AI (Batch API)</option>
-                                      <option value="webspeech">Browser Web Speech API</option>
-                                  </select>
-                               </div>
-                               <div className="flex flex-col gap-1 items-start text-sm w-full sm:w-1/2">
-                                  <label className="font-semibold text-muted-foreground">Language</label>
+                                  <label className="font-semibold text-muted-foreground">Select Spoken Language</label>
                                   <select 
                                       className="w-full h-10 px-3 py-2 rounded-md border border-input bg-background" 
                                       value={language} 
                                       onChange={e => setLanguage(e.target.value)}
-                                      disabled={recording || processing}
+                                      disabled={isRecording || isProcessing}
                                   >
-                                      <option value="unknown">Auto-Detect / Default</option>
                                       <option value="en-IN">English (India)</option>
                                       <option value="hi-IN">Hindi (hi-IN)</option>
                                       <option value="te-IN">Telugu (te-IN)</option>
@@ -227,32 +66,88 @@ export default function TranscribePage() {
                                </div>
                             </div>
 
-                            {!recording ? (
-                                <Button size="lg" onClick={startRecording} className="w-48 bg-green-600 hover:bg-green-700 disabled:opacity-50 text-white" disabled={processing}>
-                                    <Mic className="mr-2 h-5 w-5" /> Start Recording
-                                </Button>
-                            ) : (
-                                <Button size="lg" variant="destructive" onClick={stopRecording} className="w-48 animate-pulse text-white">
-                                    <Square className="mr-2 h-5 w-5" /> Stop Recording
-                                </Button>
-                            )}
-
-                            {processing && (
-                                <div className="flex items-center text-sm text-foreground mt-2">
-                                    <Loader2 className="mr-2 h-4 w-4 animate-spin text-green-600" /> Processing audio and querying Sarvam...
+                            {/* Only show "Record" if idle */}
+                            {!isRecording && !isProcessing && (
+                                <div className="py-2">
+                                    <Button 
+                                        size="lg" 
+                                        onClick={startRecording} 
+                                        className="w-56 bg-green-600 hover:bg-green-700 text-white rounded-full h-12 text-base font-semibold transition-all shadow-md hover:shadow-lg" 
+                                    >
+                                        <Mic className="mr-2 h-5 w-5" /> Start Analyzing Voice
+                                    </Button>
+                                    <p className="text-xs text-muted-foreground mt-3">You will have exactly 20 seconds to speak.</p>
                                 </div>
                             )}
 
-                            {error && (
-                                <div className="text-red-500 text-sm mt-2 font-medium">{error}</div>
+                            {/* Show entirely different interface specifically WHILE recording */}
+                            {isRecording && (
+                                <div className="w-full max-w-md bg-muted/30 border border-green-600/30 rounded-xl p-6 flex flex-col items-center animate-in fade-in zoom-in duration-300">
+                                    <div className="relative mb-6">
+                                        <div className="absolute inset-0 rounded-full bg-green-500/20 animate-ping" />
+                                        <div className="relative bg-green-100 dark:bg-green-900/50 text-green-700 dark:text-green-400 p-4 rounded-full">
+                                            <Mic className="h-8 w-8 animate-pulse" />
+                                        </div>
+                                    </div>
+                                    
+                                    <h3 className="text-lg font-semibold text-foreground mb-1">Listening Closely...</h3>
+                                    
+                                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-500 bg-green-100 dark:bg-green-900/30 px-3 py-1 rounded-full mb-6">
+                                        <Clock className="w-4 h-4" />
+                                        <span className="font-mono font-medium">Recording stops internally in {secondsRemaining}s</span>
+                                    </div>
+
+                                    <Button 
+                                        size="default" 
+                                        variant="destructive" 
+                                        onClick={stopRecording} 
+                                        className="w-full sm:w-auto px-8"
+                                    >
+                                        <Square className="mr-2 h-4 w-4" /> Stop & Finalize Text
+                                    </Button>
+                                </div>
                             )}
 
-                            {transcription && (
-                                <div className="w-full mt-4 flex flex-col gap-2 text-left border rounded-md p-4 bg-muted/40">
-                                    <h3 className="font-semibold text-foreground border-b pb-2 mb-2">Raw JSON Result:</h3>
-                                    <div className="p-2 min-h-[100px] overflow-auto whitespace-pre-wrap font-mono text-xs text-muted-foreground">
-                                        {JSON.stringify(transcription, null, 2)}
+                            {/* Show spinning loader purely while processing is happening after stop */}
+                            {isProcessing && (
+                                <div className="w-full max-w-md bg-muted/30 border border-amber-600/30 rounded-xl p-8 flex flex-col items-center animate-in fade-in duration-300">
+                                    <Loader2 className="h-10 w-10 animate-spin text-amber-500 mb-4" />
+                                    <h3 className="text-lg font-semibold text-foreground">Processing Audio Securely</h3>
+                                    <p className="text-sm text-muted-foreground mt-2">Transcribing and executing English translations...</p>
+                                </div>
+                            )}
+
+                            {/* Error Block */}
+                            {error && !isRecording && !isProcessing && (
+                                <div className="w-full max-w-lg text-red-600 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900 p-4 rounded-md text-sm mt-2 font-medium">
+                                    {error}
+                                </div>
+                            )}
+
+                            {/* Results Block - ONLY displays completely compiled text at the very end */}
+                            {result && !isRecording && !isProcessing && (
+                                <div className="w-full mt-4 flex flex-col gap-4 text-left animate-in slide-in-from-bottom-4 duration-500">
+                                    {/* Native Script Box */}
+                                    <div className="border border-green-600/30 bg-green-50/50 dark:bg-green-900/10 rounded-md p-4">
+                                        <h3 className="text-xs font-bold uppercase tracking-wider text-green-700 dark:text-green-500 mb-2">Native Transcript Generated</h3>
+                                        <p className="text-foreground text-lg px-2 py-1 leading-relaxed rounded bg-background/50 border border-green-100 dark:border-green-800 shadow-sm min-h-12 whitespace-pre-wrap">{result.native_text || "No text detected."}</p>
                                     </div>
+                                    
+                                    {/* English Translation Box */}
+                                    {result.english_text && (
+                                        <div className="border border-blue-600/30 bg-blue-50/50 dark:bg-blue-900/10 rounded-md p-4">
+                                            <h3 className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-500 mb-2">English Translation Model Output</h3>
+                                            <p className="text-foreground text-lg px-2 py-1 leading-relaxed rounded bg-background/50 border border-blue-100 dark:border-blue-800 shadow-sm min-h-12 whitespace-pre-wrap">{result.english_text}</p>
+                                        </div>
+                                    )}
+
+                                    <Button 
+                                        variant="outline" 
+                                        className="mt-4 mx-auto block" 
+                                        onClick={startRecording}
+                                    >
+                                        Record Another Message
+                                    </Button>
                                 </div>
                             )}
                         </CardContent>

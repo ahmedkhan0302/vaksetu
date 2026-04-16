@@ -1,39 +1,61 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 
-type RecorderStatus = "idle" | "recording" | "finished" | "error";
+type RecorderStatus = "idle" | "recording" | "processing" | "translating" | "finished" | "error";
 
 type Props = {
     maxDurationMs?: number;
     defaultLang?: string;
+    onRecordingComplete?: (text: string) => void;
 };
 
 function clamp01(n: number) {
     return Math.max(0, Math.min(1, n));
 }
 
-type SpeechRecognitionConstructor = new () => SpeechRecognition;
-
-function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null {
-    const w = window as unknown as {
-        SpeechRecognition?: SpeechRecognitionConstructor;
-        webkitSpeechRecognition?: SpeechRecognitionConstructor;
-    };
-    return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-}
-
 const LANG_OPTIONS: Array<{ code: string; label: string }> = [
-    { code: "en-US", label: "English" },
     { code: "hi-IN", label: "Hindi" },
-    { code: "mr-IN", label: "Marathi" },
+    { code: "en-IN", label: "English" },
+    { code: "bn-IN", label: "Bengali" },
     { code: "te-IN", label: "Telugu" },
-    { code: "kn-IN", label: "Kannada" },
+    { code: "mr-IN", label: "Marathi" },
+    { code: "ta-IN", label: "Tamil" },
     { code: "ur-IN", label: "Urdu" },
-    { code: "or-IN", label: "Odia" },
+    { code: "gu-IN", label: "Gujarati" },
+    { code: "kn-IN", label: "Kannada" },
+    { code: "ml-IN", label: "Malayalam" },
+    { code: "od-IN", label: "Odia" },
+    { code: "pa-IN", label: "Punjabi" },
+    { code: "as-IN", label: "Assamese" },
+    { code: "brx-IN", label: "Bodo" },
+    { code: "doi-IN", label: "Dogri" },
+    { code: "ks-IN", label: "Kashmiri" },
+    { code: "kok-IN", label: "Konkani" },
+    { code: "mai-IN", label: "Maithili" },
+    { code: "mni-IN", label: "Manipuri" },
+    { code: "ne-IN", label: "Nepali" },
+    { code: "sa-IN", label: "Sanskrit" },
+    { code: "sat-IN", label: "Santali" },
+    { code: "sd-IN", label: "Sindhi" },
 ];
 
-export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US" }: Props) {
+function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const dataUrl = reader.result as string;
+            // Extract pure base64 characters from data URI: data:audio/webm;base64,xxxxxxxx...
+            const base64 = dataUrl.split(",")[1];
+            resolve(base64);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "hi-IN", onRecordingComplete }: Props) {
     const [lang, setLang] = useState<string>(defaultLang);
 
     const [status, setStatus] = useState<RecorderStatus>("idle");
@@ -45,7 +67,9 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
 
     const [level, setLevel] = useState<number>(0);
     const [bars, setBars] = useState<number[]>(() => Array.from({ length: 24 }, () => 0));
-    const [transcript, setTranscript] = useState<string>("");
+    
+    const [nativeTranscript, setNativeTranscript] = useState<string>("");
+    const [englishTranscript, setEnglishTranscript] = useState<string>("");
 
     const streamRef = useRef<MediaStream | null>(null);
     const recorderRef = useRef<MediaRecorder | null>(null);
@@ -58,15 +82,8 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
     const sourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
     const rafRef = useRef<number | null>(null);
 
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
-
     const canRecord = useMemo(() => {
         return typeof window !== "undefined" && !!navigator.mediaDevices?.getUserMedia;
-    }, []);
-
-    const canTranscribe = useMemo(() => {
-        if (typeof window === "undefined") return false;
-        return getSpeechRecognitionConstructor() !== null;
     }, []);
 
     const cleanupTimers = () => {
@@ -103,25 +120,68 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
         }
     };
 
-    const cleanupRecognition = () => {
-        const r = recognitionRef.current;
-        if (!r) return;
-        try {
-            r.stop();
-        } catch {}
-        recognitionRef.current = null;
-    };
-
     const resetOutput = () => {
         if (audioUrl) URL.revokeObjectURL(audioUrl);
         setAudioUrl("");
         setAudioBlob(null);
-        setTranscript("");
+        setNativeTranscript("");
+        setEnglishTranscript("");
+    };
+
+    const processAudioFile = async (blob: Blob) => {
+        setStatus("processing");
+        try {
+            const base64 = await blobToBase64(blob);
+            
+            // Step 1: STT Native Extraction
+            const response = await fetch("/api/transcribe", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ type: "audio", audioBase64: base64, language: lang }),
+            });
+
+            if (!response.ok) {
+                const resText = await response.text();
+                throw new Error(`Failed to process audio: ${resText}`);
+            }
+
+            const data = await response.json();
+            const nativeTextData = data.result?.native_text || "";
+            setNativeTranscript(nativeTextData);
+            
+            // Step 2: Translation Extraction
+            setStatus("translating");
+            
+            if (lang !== "en-IN" && !nativeTextData.startsWith("Error")) {
+               const trResponse = await fetch("/api/transcribe", {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: JSON.stringify({ type: "text", text: nativeTextData, language: lang }),
+               });
+               
+               if (trResponse.ok) {
+                   const trData = await trResponse.json();
+                   const translatedText = trData.result?.english_text || "";
+                   setEnglishTranscript(translatedText);
+                   setStatus("finished");
+                   if (onRecordingComplete) onRecordingComplete(translatedText);
+               } else {
+                   setEnglishTranscript(`[Server Error]`);
+                   setStatus("finished");
+               }
+            } else {
+               setEnglishTranscript(nativeTextData);
+               setStatus("finished");
+               if (onRecordingComplete) onRecordingComplete(nativeTextData);
+            }
+        } catch (err: any) {
+            setStatus("error");
+            setError(err.message || "An error occurred fetching transcription.");
+        }
     };
 
     const stop = () => {
         cleanupTimers();
-        cleanupRecognition();
 
         const recorder = recorderRef.current;
         if (recorder && recorder.state !== "inactive") {
@@ -131,38 +191,6 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
             cleanupStream();
             setStatus((s) => (s === "recording" ? "finished" : s));
         }
-    };
-
-    const startRecognition = () => {
-        if (!canTranscribe) return;
-
-        const Ctor = getSpeechRecognitionConstructor();
-        if (!Ctor) return;
-
-        const recognition = new Ctor();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.lang = lang;
-
-        recognition.onresult = (event: SpeechRecognitionEvent) => {
-            let finalText = "";
-            let interimText = "";
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const result = event.results[i];
-                const text = result[0]?.transcript ?? "";
-                if (result.isFinal) finalText += text;
-                else interimText += text;
-            }
-
-            setTranscript(`${finalText} ${interimText}`.trim());
-        };
-
-        recognitionRef.current = recognition;
-
-        try {
-            recognition.start();
-        } catch {}
     };
 
     const start = async () => {
@@ -250,7 +278,9 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
 
                 cleanupAnalysis();
                 cleanupStream();
-                setStatus("finished");
+                
+                // Fire Server Processing Proxy
+                processAudioFile(blob);
             };
 
             recorder.onerror = () => {
@@ -259,8 +289,6 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                 setStatus("error");
                 setError("Recorder error occurred.");
             };
-
-            startRecognition();
 
             recorder.start(250);
             setStatus("recording");
@@ -276,7 +304,6 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
             }, 100);
         } catch (e) {
             cleanupTimers();
-            cleanupRecognition();
             cleanupAnalysis();
             cleanupStream();
             setStatus("error");
@@ -284,10 +311,10 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
         }
     };
 
+    // Note: Removed the buggy 'transcript' React hook dependency since completion triggers internally in processAudioFile natively now
     useEffect(() => {
         return () => {
             cleanupTimers();
-            cleanupRecognition();
             cleanupAnalysis();
             cleanupStream();
             if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -301,6 +328,10 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
         status === "recording" ? (
             <span className="inline-flex items-center rounded-full border border-green-600/40 bg-green-600/10 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:text-green-400">
         Recording
+      </span>
+        ) : (status === "processing" || status === "translating") ? (
+            <span className="inline-flex items-center rounded-full border border-amber-600/40 bg-amber-600/10 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-400">
+        Processing
       </span>
         ) : status === "finished" ? (
             <span className="inline-flex items-center rounded-full border border-green-600/30 bg-green-600/5 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:text-green-400">
@@ -326,8 +357,8 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                         <select
                             value={lang}
                             onChange={(e) => setLang(e.target.value)}
-                            disabled={status === "recording"}
-                            className="h-9 rounded-md border border-green-600/40 bg-background px-3 text-sm text-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/20 disabled:cursor-not-allowed disabled:opacity-50"
+                            disabled={status === "recording" || status === "processing" || status === "translating"}
+                            className="h-9 rounded-md border border-green-600/40 bg-background px-2 text-sm text-foreground focus:border-green-600 focus:ring-2 focus:ring-green-600/20 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             {LANG_OPTIONS.map((opt) => (
                                 <option key={opt.code} value={opt.code}>
@@ -337,7 +368,7 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                         </select>
                     </label>
 
-                    {status !== "recording" ? (
+                    {status === "idle" || status === "finished" || status === "error" ? (
                         <button
                             type="button"
                             onClick={start}
@@ -346,7 +377,7 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                         >
                             Record
                         </button>
-                    ) : (
+                    ) : status === "recording" ? (
                         <button
                             type="button"
                             onClick={stop}
@@ -354,45 +385,89 @@ export function AudioRecorderCard({ maxDurationMs = 10000, defaultLang = "en-US"
                         >
                             Stop
                         </button>
+                    ) : (
+                         <button
+                            type="button"
+                            disabled
+                            className="h-9 flex items-center justify-center rounded-md border border-amber-600 bg-amber-600/10 px-3 text-sm font-medium text-amber-700 opacity-50 cursor-not-allowed"
+                        >
+                            Wait...
+                        </button>
                     )}
                 </div>
             </div>
 
-            {/* Loudness meter + bars */}
-            <div className="rounded-lg bg-muted/40 p-4">
-                <div className="mb-2 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Input level</p>
-                    <p className="text-xs text-muted-foreground">
-                        {status === "recording" ? `${Math.round(level * 100)}%` : "—"}
-                    </p>
+            {/* Error State */}
+            {error && (
+                <div className="rounded-lg bg-red-50 p-4 border border-red-200">
+                    <p className="text-sm text-red-600">{error}</p>
                 </div>
+            )}
 
-                <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-                    <div
-                        className="h-full bg-green-600/70 transition-[width] duration-100"
-                        style={{ width: `${Math.round(level * 100)}%` }}
-                    />
+            {/* Initial Blank State (Optional placeholder) */}
+            {status === "idle" && !error && (
+                <div className="rounded-lg bg-muted/20 p-8 flex flex-col items-center justify-center border border-dashed border-border/50 text-muted-foreground">
+                    <p className="text-sm">Click Record to start capturing speech securely</p>
                 </div>
+            )}
 
-                <div className="mt-3 flex h-10 items-end gap-1">
-                    {bars.map((b, idx) => (
+            {/* Live Recording Phase: Loudness meter */}
+            {status === "recording" && (
+                <div className="rounded-lg bg-muted/40 p-4 animate-in fade-in zoom-in duration-300">
+                    <div className="mb-2 flex items-center justify-between">
+                        <p className="text-xs text-muted-foreground">Input level</p>
+                        <p className="text-xs text-muted-foreground">
+                            {`${Math.round(level * 100)}%`}
+                        </p>
+                    </div>
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
                         <div
-                            key={idx}
-                            className="w-full rounded-sm bg-green-600/50"
-                            style={{ height: `${Math.max(3, Math.round(b * 40))}px` }}
+                            className="h-full bg-green-600/70 transition-[width] duration-100"
+                            style={{ width: `${Math.round(level * 100)}%` }}
                         />
-                    ))}
+                    </div>
+                    <div className="mt-3 flex h-10 items-end gap-1">
+                        {bars.map((b, idx) => (
+                            <div
+                                key={idx}
+                                className="w-full rounded-sm bg-green-600/50"
+                                style={{ height: `${Math.max(3, Math.round(b * 40))}px` }}
+                            />
+                        ))}
+                    </div>
                 </div>
-            </div>
+            )}
 
-            {/* Transcript */}
-            <div className="rounded-lg bg-muted/40 p-4">
-                <div className="mb-1 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">Live transcript</p>
+            {/* Processing State */}
+            {status === "processing" && (
+                <div className="rounded-lg bg-muted/20 p-8 flex flex-col items-center justify-center border border-dashed border-amber-600/30 text-amber-600/80 space-y-3 animate-in fade-in zoom-in">
+                    <Loader2 className="h-6 w-6 animate-spin text-amber-600" />
+                    <p className="text-sm">Batching audio block through Sarvam AI...</p>
                 </div>
+            )}
 
-                <p className="text-sm text-foreground">{transcript || "—"}</p>
-            </div>
+            {/* Translating / Finished Phase */}
+            {(status === "translating" || status === "finished") && (
+                <div className="rounded-lg bg-green-50/50 dark:bg-green-900/10 border border-green-600/30 p-4 animate-in slide-in-from-bottom-4 duration-500">
+                    <div className="space-y-3">
+                        <div>
+                             <p className="text-xs text-muted-foreground mb-1">Native Input:</p>
+                             <p className="text-sm text-foreground bg-background rounded border p-2">{nativeTranscript || "No speech detected."}</p>
+                        </div>
+                        <div>
+                             <p className="text-xs text-muted-foreground mb-1">English Translation:</p>
+                             {status === "translating" ? (
+                                <div className="text-sm text-amber-600 bg-amber-50/50 rounded border border-amber-200/50 p-2 flex items-center gap-2">
+                                     <Loader2 className="h-4 w-4 animate-spin" />
+                                     Translating to English...
+                                </div>
+                             ) : (
+                                <p className="text-sm text-foreground bg-green-100/50 dark:bg-green-950/50 rounded border border-green-200/50 dark:border-green-800 p-2 font-medium">{englishTranscript || "Translation failed."}</p>
+                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

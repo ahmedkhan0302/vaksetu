@@ -23,82 +23,138 @@ function findFirstFile(dir: string): string | null {
   return null;
 }
 
+// Helper to translate to English using Sarvam's Translate API
+async function translateToEnglish(text: string, sourceLang: string): Promise<string> {
+    if (!text || text.trim() === '') return '';
+    try {
+        const payload = {
+            input: text.trim(),
+            source_language_code: sourceLang || 'hi-IN',
+            target_language_code: 'en-IN',
+            model: 'sarvam-translate:v1'
+        };
+        
+        const response = await fetch('https://api.sarvam.ai/translate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'api-subscription-key': process.env.SARVAM_API_KEY || ''
+            },
+            body: JSON.stringify(payload)
+        });
+        const data = await response.json();
+        
+        if (!response.ok) {
+            console.error("Translation returned an error from Sarvam:", data);
+            return `[Translation API Error: ${JSON.stringify(data)}]`;
+        }
+        
+        return data.translated_text || `[Translation Placeholder for: ${text}]`;
+    } catch (err) {
+        console.error("Translation error:", err);
+        return `[Failed to translate: ${text}]`;
+    }
+}
+
 export async function POST(request: Request) {
   let audioPath = '';
   let outDir = '';
 
   try {
-    const { audioBase64, language } = await request.json();
+    const body = await request.json();
+    const { type, language } = body;
     
     if (!process.env.SARVAM_API_KEY) {
       return NextResponse.json({ error: "Missing SARVAM_API_KEY in environment variables." }, { status: 500 })
     }
 
-    const unq = crypto.randomUUID();
-    audioPath = path.join(os.tmpdir(), `${unq}.wav`);
-    outDir = path.join(os.tmpdir(), `out_${unq}`);
-    
-    console.log(`[Batch Transcribe] Received request for lang ${language}, writing to ${audioPath}...`);
-    fs.writeFileSync(audioPath, Buffer.from(audioBase64, 'base64'));
-
-    const client = new SarvamAIClient({
-      apiSubscriptionKey: process.env.SARVAM_API_KEY
-    });
-
-    console.log(`[Batch Transcribe] API Key present, creating job with model saaras:v3...`);
-    const job = await client.speechToTextJob.createJob({
-        model: "saaras:v3",
-        languageCode: language || "unknown",
-        withDiarization: true,
-        numSpeakers: 2
-    });
-
-    console.log(`[Batch Transcribe] Job created, uploading files...`);
-    await job.uploadFiles([audioPath]);
-    
-    console.log(`[Batch Transcribe] Files uploaded, starting job...`);
-    await job.start();
-    
-    console.log(`[Batch Transcribe] Waiting until complete...`);
-    await job.waitUntilComplete();
-
-    console.log(`[Batch Transcribe] Job complete. Fetching results...`);
-    const fileResults = await job.getFileResults();
-    let finalPayload: any = null;
-
-    if (fileResults.successful.length > 0) {
-        fs.mkdirSync(outDir, { recursive: true });
-        console.log(`[Batch Transcribe] Downloading outputs to ${outDir}...`);
-        await job.downloadOutputs(outDir);
+    // SCENARIO 1: We receive purely Native TEXT (E.g. Web Speech API)
+    if (type === 'text') {
+        const { text } = body;
+        if (!text) return NextResponse.json({ error: "Missing text payload" }, { status: 400 });
         
-        const extractedJsonPath = findFirstFile(outDir);
-        if (extractedJsonPath) {
-           console.log(`[Batch Transcribe] Found output file: ${extractedJsonPath}`);
-           const jsonRaw = fs.readFileSync(extractedJsonPath, 'utf8');
-           try {
-             finalPayload = JSON.parse(jsonRaw);
-           } catch {
-             finalPayload = jsonRaw; // Maybe it's raw text
-           }
-        } else {
-           console.warn(`[Batch Transcribe] No output file found inside downloaded directory.`);
-           finalPayload = { error: "No output file found inside downloaded output directory." };
+        let translated = text;
+        // If it's not english, translate it.
+        if (language && !language.startsWith('en')) {
+            translated = await translateToEnglish(text, language);
         }
-    } else {
-        console.error(`[Batch Transcribe] Batch job failed details:`, fileResults.failed);
-        finalPayload = { error: "Batch job failed", details: fileResults.failed };
+
+        return NextResponse.json({ 
+            result: {
+               engine: 'webspeech (api passthrough)',
+               native_text: text,
+               english_text: translated
+            } 
+        });
     }
 
-    try {
-       if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-       if (fs.existsSync(outDir)) fs.rmSync(outDir, { recursive: true, force: true });
-    } catch(err) {
-       console.error("Cleanup error", err);
+    // SCENARIO 2: We receive AUDIO that needs Sarvam STT (E.g. Sarvam Engine)
+    if (type === 'audio') {
+        const { audioBase64 } = body;
+        if (!audioBase64) return NextResponse.json({ error: "Missing audioBase64 payload" }, { status: 400 });
+
+        const unq = crypto.randomUUID();
+        audioPath = path.join(os.tmpdir(), `${unq}.wav`);
+        outDir = path.join(os.tmpdir(), `out_${unq}`);
+        
+        fs.writeFileSync(audioPath, Buffer.from(audioBase64, 'base64'));
+
+        const client = new SarvamAIClient({
+          apiSubscriptionKey: process.env.SARVAM_API_KEY
+        });
+
+        const job = await client.speechToTextJob.createJob({
+            model: "saaras:v3",
+            languageCode: language || "unknown",
+            withDiarization: true,
+            numSpeakers: 2
+        });
+
+        await job.uploadFiles([audioPath]);
+        await job.start();
+        await job.waitUntilComplete();
+
+        const fileResults = await job.getFileResults();
+        let extractedNativeText = "";
+
+        if (fileResults.successful.length > 0) {
+            fs.mkdirSync(outDir, { recursive: true });
+            await job.downloadOutputs(outDir);
+            
+            const extractedJsonPath = findFirstFile(outDir);
+            if (extractedJsonPath) {
+               const jsonRaw = fs.readFileSync(extractedJsonPath, 'utf8');
+               try {
+                 const parsed = JSON.parse(jsonRaw);
+                 // Need to extract the actual transcript from Sarvam's output structure
+                 extractedNativeText = parsed?.transcript || parsed?.text || JSON.stringify(parsed);
+               } catch {
+                 extractedNativeText = jsonRaw;
+               }
+            } else {
+               extractedNativeText = "Error: No output file found";
+            }
+        } else {
+            extractedNativeText = "Error: Batch job failed";
+        }
+
+        try {
+           if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+           if (fs.existsSync(outDir)) fs.rmSync(outDir, { recursive: true, force: true });
+        } catch(err) {}
+
+        // Note: No automatic translation here. The frontend is requested to trigger /translate step 2 manually!
+        return NextResponse.json({ 
+            result: {
+                engine: 'sarvam',
+                native_text: extractedNativeText,
+                english_text: ""
+            }
+        });
     }
 
-    // Send the entire JSON enclosed in result
-    console.log(`[Batch Transcribe] Sending final payload.`);
-    return NextResponse.json({ result: finalPayload });
+    return NextResponse.json({ error: "Invalid type. Must be 'audio' or 'text'." }, { status: 400 });
+
   } catch (error: any) {
     try {
         if (audioPath && fs.existsSync(audioPath)) fs.unlinkSync(audioPath);

@@ -6,13 +6,13 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Languages, Mic, Camera } from "lucide-react";
 import { CameraPreview } from "@/components/camera-preview";
 import { AudioRecorderCard } from "@/components/microphone-input";
-import { SignAvatar } from "@/components/avatar/SignAvatar";
+import { GlossVideoPlayer } from "@/components/avatar/GlossVideoPlayer";
 
 type Mode = "sign-to-text" | "speech-to-sign";
 
 export default function Page() {
     const [mode, setMode] = useState<Mode>("sign-to-text");
-    const [speechText] = useState("");
+    const [speechText, setSpeechText] = useState("");
 
     const isSignToText = mode === "sign-to-text";
 
@@ -91,7 +91,7 @@ export default function Page() {
                             {isSignToText ? (
                                 <CameraPreview />
                             ) : (
-                                <AudioRecorderCard />
+                                <AudioRecorderCard onRecordingComplete={setSpeechText} />
                             )}
                         </section>
 
@@ -102,7 +102,7 @@ export default function Page() {
                                     {isSignToText ? "Translated Result" : "Sign Avatar"}
                                 </h2>
 
-                                {isSignToText ? (
+                                {isSignToText && (
                                     <label className="flex items-center gap-2 text-xs text-muted-foreground">
                                         Language
                                         <select
@@ -116,10 +116,6 @@ export default function Page() {
                                             <option value="ps">Pashto</option>
                                         </select>
                                     </label>
-                                ) : (
-                                    <span className="text-xs text-muted-foreground">
-                    {speechText ? "Ready to animate" : "Waiting for speech"}
-                  </span>
                                 )}
                             </header>
 
@@ -130,8 +126,8 @@ export default function Page() {
                                     </p>
                                 </div>
                             ) : (
-                                <div className="space-y-3">
-                                    <SignAvatar />
+                                <div className="space-y-3 h-full pb-4">
+                                    <GlossVideoPlayer englishText={speechText} />
                                 </div>
                             )}
                         </section>
