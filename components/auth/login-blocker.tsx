@@ -162,6 +162,18 @@ export function LoginBlocker({ onAuthed }: { onAuthed: () => void }) {
                         >
                             Continue with Google (placeholder)
                         </Button>
+
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="text-muted-foreground hover:text-foreground"
+                            disabled={loading}
+                            onClick={() => {
+                                window.location.href = "/"
+                            }}
+                        >
+                            Cancel
+                        </Button>
                     </form>
                 </CardContent>
             </Card>
