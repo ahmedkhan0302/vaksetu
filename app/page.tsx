@@ -16,6 +16,11 @@ export default function Page() {
 
     const isSignToText = mode === "sign-to-text";
 
+    const handleModeSwitch = (newMode: Mode) => {
+        setMode(newMode);
+        setSpeechText("");
+    };
+
     return (
         <>
             <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
@@ -42,7 +47,7 @@ export default function Page() {
                         <div className="flex items-center rounded-lg border bg-background p-1">
                             <button
                                 type="button"
-                                onClick={() => setMode("sign-to-text")}
+                                onClick={() => handleModeSwitch("sign-to-text")}
                                 className={[
                                     "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
                                     isSignToText
@@ -57,7 +62,7 @@ export default function Page() {
 
                             <button
                                 type="button"
-                                onClick={() => setMode("speech-to-sign")}
+                                onClick={() => handleModeSwitch("speech-to-sign")}
                                 className={[
                                     "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition",
                                     !isSignToText

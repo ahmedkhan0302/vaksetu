@@ -6,13 +6,34 @@ export async function fetchGlossesFromText(englishText: string): Promise<string[
     // Basic defensive checks
     if (!englishText || typeof englishText !== 'string') return [];
 
-    // Simulate backend network delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Mock NLP parser: strip punctuation, split by space, uppercase everything
-    const washedText = englishText.replace(/[^\w\s]|_/g, "").trim().toUpperCase();
-    const rawWords = washedText.split(/\s+/).filter(w => w.length > 0);
-
-    // Later: You can map stop words here natively, or rely on FastAPI for AI alignment
-    return rawWords;
+    try {
+        const url = process.env.NEXT_PUBLIC_GLOSS_API_URL || 'http://localhost:8000/convert-text-to-gloss';
+        
+        const response = await fetch(url, {
+            method: 'POST', // Assuming standard JSON Body mapping for the FastAPI endpoint
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text: englishText })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`Gloss API HTTP error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // The endpoint strictly returns { "glosses": ["hello", "friend"] }
+        if (data.glosses && Array.isArray(data.glosses)) {
+            // Guarantee .mp4 local mapping case parity natively
+            return data.glosses.map((word: string) => word.toUpperCase());
+        }
+        
+        return [];
+    } catch (err) {
+        console.warn("FastAPI gloss mapping failed or endpoint is inactive, falling back to local manual heuristic parser:", err);
+        // Fallback robust logic safely defaults back to naive word splitting
+        const washedText = englishText.replace(/[^\w\s]|_/g, "").trim().toUpperCase();
+        return washedText.split(/\s+/).filter(w => w.length > 0);
+    }
 }
