@@ -1,0 +1,285 @@
+[
+    {
+      "id": "0",
+      "query": "0",
+      "translation": "Zero",
+      "signVideoUrl": "/Glosses/Videos/assets/0.mp4",
+      "tags": ["numbers"]
+    },
+    {
+      "id": "1",
+      "query": "1",
+      "translation": "One",
+      "signVideoUrl": "/Glosses/Videos/assets/1.mp4",
+      "tags": ["numbers"]
+    },
+    {
+      "id": "2",
+      "query": "2",
+      "translation": "Two",
+      "signVideoUrl": "/Glosses/Videos/assets/2.mp4",
+      "tags": ["numbers"]
+    },
+    {
+      "id": "3",
+      "query": "3",
+      "translation": "Three",
+      "signVideoUrl": "/Glosses/Videos/assets/3.mp4",
+      "tags": ["numbers"]
+    },
+    {
+      "id": "a",
+      "query": "A",
+      "translation": "A",
+      "signVideoUrl": "/Glosses/Videos/assets/A.mp4",
+      "tags": ["alphabet"]
+    },
+    {
+      "id": "b",
+      "query": "B",
+      "translation": "B",
+      "signVideoUrl": "/Glosses/Videos/assets/B.mp4",
+      "tags": ["alphabet"]
+    },
+    {
+      "id": "c",
+      "query": "C",
+      "translation": "C",
+      "signVideoUrl": "/Glosses/Videos/assets/C.mp4",
+      "tags": ["alphabet"]
+    },
+    {
+      "id": "after",
+      "query": "After",
+      "translation": "After",
+      "signVideoUrl": "/Glosses/Videos/assets/After.mp4",
+      "tags": ["time"]
+    },
+    {
+      "id": "again",
+      "query": "Again",
+      "translation": "Again",
+      "signVideoUrl": "/Glosses/Videos/assets/Again.mp4",
+      "tags": ["common"]
+    },
+    {
+      "id": "before",
+      "query": "Before",
+      "translation": "Before",
+      "signVideoUrl": "/Glosses/Videos/assets/Before.mp4",
+      "tags": ["time"]
+    },
+    {
+      "id": "hello",
+      "query": "Hello",
+      "translation": "Hello",
+      "signVideoUrl": "/Glosses/Videos/assets/Hello.mp4",
+      "tags": ["greetings"]
+    },
+    {
+      "id": "thank-you",
+      "query": "Thank You",
+      "translation": "Thank You",
+      "signVideoUrl": "/Glosses/Videos/assets/Thank You.mp4",
+      "tags": ["greetings"]
+    },
+    {
+      "id": "bye",
+      "query": "Bye",
+      "translation": "Goodbye",
+      "signVideoUrl": "/Glosses/Videos/assets/Bye.mp4",
+      "tags": ["greetings"]
+    },
+    {
+      "id": "eat",
+      "query": "Eat",
+      "translation": "Eat",
+      "signVideoUrl": "/Glosses/Videos/assets/Eat.mp4",
+      "tags": ["daily"]
+    },
+    {
+      "id": "help",
+      "query": "Help",
+      "translation": "Help",
+      "signVideoUrl": "/Glosses/Videos/assets/Help.mp4",
+      "tags": ["common"]
+    },
+    {
+      "id": "yes",
+      "query": "Yes",
+      "translation": "Yes",
+      "signVideoUrl": "/Glosses/Videos/assets/Good.mp4",
+      "tags": ["responses"]
+    },
+    {
+      "id": "no",
+      "query": "No",
+      "translation": "No",
+      "signVideoUrl": "/Glosses/Videos/assets/Not.mp4",
+      "tags": ["responses"]
+    },
+
+    { "id": "img-1", "query": "1", "translation": "One", "signImageUrl": "/Glosses/1.jpg", "tags": ["numbers"] },
+    { "id": "img-2", "query": "2", "translation": "Two", "signImageUrl": "/Glosses/2.jpg", "tags": ["numbers"] },
+    { "id": "img-3", "query": "3", "translation": "Three", "signImageUrl": "/Glosses/3.jpg", "tags": ["numbers"] },
+    { "id": "img-4", "query": "4", "translation": "Four", "signImageUrl": "/Glosses/4.jpg", "tags": ["numbers"] },
+    { "id": "img-5", "query": "5", "translation": "Five", "signImageUrl": "/Glosses/5.jpg", "tags": ["numbers"] },
+    { "id": "img-6", "query": "6", "translation": "Six", "signImageUrl": "/Glosses/6.jpg", "tags": ["numbers"] },
+    { "id": "img-7", "query": "7", "translation": "Seven", "signImageUrl": "/Glosses/7.jpg", "tags": ["numbers"] },
+    { "id": "img-8", "query": "8", "translation": "Eight", "signImageUrl": "/Glosses/8.jpg", "tags": ["numbers"] },
+    { "id": "img-9", "query": "9", "translation": "Nine", "signImageUrl": "/Glosses/9.jpg", "tags": ["numbers"] },
+
+    { "id": "img-a", "query": "A", "translation": "A", "signImageUrl": "/Glosses/A.jpg", "tags": ["alphabet"] },
+    { "id": "img-b", "query": "B", "translation": "B", "signImageUrl": "/Glosses/B.jpg", "tags": ["alphabet"] },
+    { "id": "img-c", "query": "C", "translation": "C", "signImageUrl": "/Glosses/C.jpg", "tags": ["alphabet"] },
+    { "id": "img-d", "query": "D", "translation": "D", "signImageUrl": "/Glosses/D.jpg", "tags": ["alphabet"] },
+    { "id": "img-e", "query": "E", "translation": "E", "signImageUrl": "/Glosses/E.jpg", "tags": ["alphabet"] },
+    { "id": "img-f", "query": "F", "translation": "F", "signImageUrl": "/Glosses/F.jpg", "tags": ["alphabet"] },
+    { "id": "img-g", "query": "G", "translation": "G", "signImageUrl": "/Glosses/G.jpg", "tags": ["alphabet"] },
+    { "id": "img-h", "query": "H", "translation": "H", "signImageUrl": "/Glosses/H.jpg", "tags": ["alphabet"] },
+    { "id": "img-i", "query": "I", "translation": "I", "signImageUrl": "/Glosses/I.jpg", "tags": ["alphabet"] },
+    { "id": "img-j", "query": "J", "translation": "J", "signImageUrl": "/Glosses/J.jpg", "tags": ["alphabet"] },
+    { "id": "img-k", "query": "K", "translation": "K", "signImageUrl": "/Glosses/K.jpg", "tags": ["alphabet"] },
+    { "id": "img-l", "query": "L", "translation": "L", "signImageUrl": "/Glosses/L.jpg", "tags": ["alphabet"] },
+    { "id": "img-m", "query": "M", "translation": "M", "signImageUrl": "/Glosses/M.jpg", "tags": ["alphabet"] },
+    { "id": "img-n", "query": "N", "translation": "N", "signImageUrl": "/Glosses/N.jpg", "tags": ["alphabet"] },
+    { "id": "img-o", "query": "O", "translation": "O", "signImageUrl": "/Glosses/O.jpg", "tags": ["alphabet"] },
+    { "id": "img-p", "query": "P", "translation": "P", "signImageUrl": "/Glosses/P.jpg", "tags": ["alphabet"] },
+    { "id": "img-q", "query": "Q", "translation": "Q", "signImageUrl": "/Glosses/Q.jpg", "tags": ["alphabet"] },
+    { "id": "img-r", "query": "R", "translation": "R", "signImageUrl": "/Glosses/R.jpg", "tags": ["alphabet"] },
+    { "id": "img-s", "query": "S", "translation": "S", "signImageUrl": "/Glosses/S.jpg", "tags": ["alphabet"] },
+    { "id": "img-t", "query": "T", "translation": "T", "signImageUrl": "/Glosses/T.jpg", "tags": ["alphabet"] },
+    { "id": "img-u", "query": "U", "translation": "U", "signImageUrl": "/Glosses/U.jpg", "tags": ["alphabet"] },
+    { "id": "img-v", "query": "V", "translation": "V", "signImageUrl": "/Glosses/V.jpg", "tags": ["alphabet"] },
+    { "id": "img-w", "query": "W", "translation": "W", "signImageUrl": "/Glosses/W.jpg", "tags": ["alphabet"] },
+    { "id": "img-x", "query": "X", "translation": "X", "signImageUrl": "/Glosses/X.jpg", "tags": ["alphabet"] },
+    { "id": "img-y", "query": "Y", "translation": "Y", "signImageUrl": "/Glosses/Y.jpg", "tags": ["alphabet"] },
+    { "id": "img-z", "query": "Z", "translation": "Z", "signImageUrl": "/Glosses/Z.jpg", "tags": ["alphabet"] },
+    {
+      "id": "me",
+      "query": "Me",
+      "translation": "Me",
+      "signVideoUrl": "/Glosses/Videos/assets/ME.mp4",
+      "tags": ["pronouns"]
+    },
+  { "id": "4", "query": "4", "translation": "Four", "signVideoUrl": "/Glosses/Videos/assets/4.mp4", "tags": ["numbers"] },
+  { "id": "5", "query": "5", "translation": "Five", "signVideoUrl": "/Glosses/Videos/assets/5.mp4", "tags": ["numbers"] },
+  { "id": "6", "query": "6", "translation": "Six", "signVideoUrl": "/Glosses/Videos/assets/6.mp4", "tags": ["numbers"] },
+  { "id": "7", "query": "7", "translation": "Seven", "signVideoUrl": "/Glosses/Videos/assets/7.mp4", "tags": ["numbers"] },
+  { "id": "8", "query": "8", "translation": "Eight", "signVideoUrl": "/Glosses/Videos/assets/8.mp4", "tags": ["numbers"] },
+  { "id": "9", "query": "9", "translation": "Nine", "signVideoUrl": "/Glosses/Videos/assets/9.mp4", "tags": ["numbers"] },
+
+  { "id": "d", "query": "D", "translation": "D", "signVideoUrl": "/Glosses/Videos/assets/D.mp4", "tags": ["alphabet"] },
+  { "id": "e", "query": "E", "translation": "E", "signVideoUrl": "/Glosses/Videos/assets/E.mp4", "tags": ["alphabet"] },
+  { "id": "f", "query": "F", "translation": "F", "signVideoUrl": "/Glosses/Videos/assets/F.mp4", "tags": ["alphabet"] },
+  { "id": "g", "query": "G", "translation": "G", "signVideoUrl": "/Glosses/Videos/assets/G.mp4", "tags": ["alphabet"] },
+  { "id": "h", "query": "H", "translation": "H", "signVideoUrl": "/Glosses/Videos/assets/H.mp4", "tags": ["alphabet"] },
+  { "id": "i", "query": "I", "translation": "I", "signVideoUrl": "/Glosses/Videos/assets/I.mp4", "tags": ["alphabet"] },
+  { "id": "j", "query": "J", "translation": "J", "signVideoUrl": "/Glosses/Videos/assets/J.mp4", "tags": ["alphabet"] },
+  { "id": "k", "query": "K", "translation": "K", "signVideoUrl": "/Glosses/Videos/assets/K.mp4", "tags": ["alphabet"] },
+  { "id": "l", "query": "L", "translation": "L", "signVideoUrl": "/Glosses/Videos/assets/L.mp4", "tags": ["alphabet"] },
+  { "id": "m", "query": "M", "translation": "M", "signVideoUrl": "/Glosses/Videos/assets/M.mp4", "tags": ["alphabet"] },
+  { "id": "n", "query": "N", "translation": "N", "signVideoUrl": "/Glosses/Videos/assets/N.mp4", "tags": ["alphabet"] },
+  { "id": "o", "query": "O", "translation": "O", "signVideoUrl": "/Glosses/Videos/assets/O.mp4", "tags": ["alphabet"] },
+  { "id": "p", "query": "P", "translation": "P", "signVideoUrl": "/Glosses/Videos/assets/P.mp4", "tags": ["alphabet"] },
+  { "id": "q", "query": "Q", "translation": "Q", "signVideoUrl": "/Glosses/Videos/assets/Q.mp4", "tags": ["alphabet"] },
+  { "id": "r", "query": "R", "translation": "R", "signVideoUrl": "/Glosses/Videos/assets/R.mp4", "tags": ["alphabet"] },
+  { "id": "s", "query": "S", "translation": "S", "signVideoUrl": "/Glosses/Videos/assets/S.mp4", "tags": ["alphabet"] },
+  { "id": "t", "query": "T", "translation": "T", "signVideoUrl": "/Glosses/Videos/assets/T.mp4", "tags": ["alphabet"] },
+  { "id": "u", "query": "U", "translation": "U", "signVideoUrl": "/Glosses/Videos/assets/U.mp4", "tags": ["alphabet"] },
+  { "id": "v", "query": "V", "translation": "V", "signVideoUrl": "/Glosses/Videos/assets/V.mp4", "tags": ["alphabet"] },
+  { "id": "w", "query": "W", "translation": "W", "signVideoUrl": "/Glosses/Videos/assets/W.mp4", "tags": ["alphabet"] },
+  { "id": "x", "query": "X", "translation": "X", "signVideoUrl": "/Glosses/Videos/assets/X.mp4", "tags": ["alphabet"] },
+  { "id": "y", "query": "Y", "translation": "Y", "signVideoUrl": "/Glosses/Videos/assets/Y.mp4", "tags": ["alphabet"] },
+  { "id": "z", "query": "Z", "translation": "Z", "signVideoUrl": "/Glosses/Videos/assets/Z.mp4", "tags": ["alphabet"] },
+
+  { "id": "against", "query": "Against", "translation": "Against", "signVideoUrl": "/Glosses/Videos/assets/Against.mp4", "tags": ["common"] },
+  { "id": "age", "query": "Age", "translation": "Age", "signVideoUrl": "/Glosses/Videos/assets/Age.mp4", "tags": ["common"] },
+  { "id": "all", "query": "All", "translation": "All", "signVideoUrl": "/Glosses/Videos/assets/All.mp4", "tags": ["common"] },
+  { "id": "alone", "query": "Alone", "translation": "Alone", "signVideoUrl": "/Glosses/Videos/assets/Alone.mp4", "tags": ["common"] },
+  { "id": "also", "query": "Also", "translation": "Also", "signVideoUrl": "/Glosses/Videos/assets/Also.mp4", "tags": ["common"] },
+  { "id": "and", "query": "And", "translation": "And", "signVideoUrl": "/Glosses/Videos/assets/And.mp4", "tags": ["common"] },
+  { "id": "ask", "query": "Ask", "translation": "Ask", "signVideoUrl": "/Glosses/Videos/assets/Ask.mp4", "tags": ["common"] },
+  { "id": "at", "query": "At", "translation": "At", "signVideoUrl": "/Glosses/Videos/assets/At.mp4", "tags": ["common"] },
+
+  { "id": "be", "query": "Be", "translation": "Be", "signVideoUrl": "/Glosses/Videos/assets/Be.mp4", "tags": ["common"] },
+  { "id": "beautiful", "query": "Beautiful", "translation": "Beautiful", "signVideoUrl": "/Glosses/Videos/assets/Beautiful.mp4", "tags": ["adjective"] },
+  { "id": "best", "query": "Best", "translation": "Best", "signVideoUrl": "/Glosses/Videos/assets/Best.mp4", "tags": ["adjective"] },
+  { "id": "better", "query": "Better", "translation": "Better", "signVideoUrl": "/Glosses/Videos/assets/Better.mp4", "tags": ["adjective"] },
+  { "id": "busy", "query": "Busy", "translation": "Busy", "signVideoUrl": "/Glosses/Videos/assets/Busy.mp4", "tags": ["adjective"] },
+  { "id": "but", "query": "But", "translation": "But", "signVideoUrl": "/Glosses/Videos/assets/But.mp4", "tags": ["common"] },
+
+  { "id": "can", "query": "Can", "translation": "Can", "signVideoUrl": "/Glosses/Videos/assets/Can.mp4", "tags": ["common"] },
+  { "id": "cannot", "query": "Cannot", "translation": "Cannot", "signVideoUrl": "/Glosses/Videos/assets/Cannot.mp4", "tags": ["common"] },
+  { "id": "change", "query": "Change", "translation": "Change", "signVideoUrl": "/Glosses/Videos/assets/Change.mp4", "tags": ["common"] },
+  { "id": "college", "query": "College", "translation": "College", "signVideoUrl": "/Glosses/Videos/assets/College.mp4", "tags": ["education"] },
+  { "id": "come", "query": "Come", "translation": "Come", "signVideoUrl": "/Glosses/Videos/assets/Come.mp4", "tags": ["common"] },
+  { "id": "computer", "query": "Computer", "translation": "Computer", "signVideoUrl": "/Glosses/Videos/assets/Computer.mp4", "tags": ["tech"] },
+
+  { "id": "day", "query": "Day", "translation": "Day", "signVideoUrl": "/Glosses/Videos/assets/Day.mp4", "tags": ["time"] },
+  { "id": "distance", "query": "Distance", "translation": "Distance", "signVideoUrl": "/Glosses/Videos/assets/Distance.mp4", "tags": ["common"] },
+  { "id": "do", "query": "Do", "translation": "Do", "signVideoUrl": "/Glosses/Videos/assets/Do.mp4", "tags": ["common"] },
+  { "id": "do-not", "query": "Do Not", "translation": "Do Not", "signVideoUrl": "/Glosses/Videos/assets/Do Not.mp4", "tags": ["common"] },
+  { "id": "does-not", "query": "Does Not", "translation": "Does Not", "signVideoUrl": "/Glosses/Videos/assets/Does Not.mp4", "tags": ["common"] },
+
+  { "id": "engineer", "query": "Engineer", "translation": "Engineer", "signVideoUrl": "/Glosses/Videos/assets/Engineer.mp4", "tags": ["profession"] },
+  { "id": "fight", "query": "Fight", "translation": "Fight", "signVideoUrl": "/Glosses/Videos/assets/Fight.mp4", "tags": ["action"] },
+  { "id": "finish", "query": "Finish", "translation": "Finish", "signVideoUrl": "/Glosses/Videos/assets/Finish.mp4", "tags": ["action"] },
+  { "id": "from", "query": "From", "translation": "From", "signVideoUrl": "/Glosses/Videos/assets/From.mp4", "tags": ["common"] },
+
+  { "id": "go", "query": "Go", "translation": "Go", "signVideoUrl": "/Glosses/Videos/assets/Go.mp4", "tags": ["action"] },
+  { "id": "good", "query": "Good", "translation": "Good", "signVideoUrl": "/Glosses/Videos/assets/Good.mp4", "tags": ["adjective"] },
+  { "id": "great", "query": "Great", "translation": "Great", "signVideoUrl": "/Glosses/Videos/assets/Great.mp4", "tags": ["adjective"] },
+
+  { "id": "hand", "query": "Hand", "translation": "Hand", "signVideoUrl": "/Glosses/Videos/assets/Hand.mp4", "tags": ["body"] },
+  { "id": "hands", "query": "Hands", "translation": "Hands", "signVideoUrl": "/Glosses/Videos/assets/Hands.mp4", "tags": ["body"] },
+  { "id": "happy", "query": "Happy", "translation": "Happy", "signVideoUrl": "/Glosses/Videos/assets/Happy.mp4", "tags": ["emotion"] },
+
+  { "id": "home", "query": "Home", "translation": "Home", "signVideoUrl": "/Glosses/Videos/assets/Home.mp4", "tags": ["place"] },
+  { "id": "how", "query": "How", "translation": "How", "signVideoUrl": "/Glosses/Videos/assets/How.mp4", "tags": ["question"] },
+
+  { "id": "invent", "query": "Invent", "translation": "Invent", "signVideoUrl": "/Glosses/Videos/assets/Invent.mp4", "tags": ["action"] },
+  { "id": "it", "query": "It", "translation": "It", "signVideoUrl": "/Glosses/Videos/assets/It.mp4", "tags": ["pronouns"] },
+
+  { "id": "keep", "query": "Keep", "translation": "Keep", "signVideoUrl": "/Glosses/Videos/assets/Keep.mp4", "tags": ["action"] },
+  { "id": "language", "query": "Language", "translation": "Language", "signVideoUrl": "/Glosses/Videos/assets/Language.mp4", "tags": ["education"] },
+  { "id": "learn", "query": "Learn", "translation": "Learn", "signVideoUrl": "/Glosses/Videos/assets/Learn.mp4", "tags": ["education"] },
+
+  { "id": "more", "query": "More", "translation": "More", "signVideoUrl": "/Glosses/Videos/assets/More.mp4", "tags": ["common"] },
+  { "id": "my", "query": "My", "translation": "My", "signVideoUrl": "/Glosses/Videos/assets/My.mp4", "tags": ["pronouns"] },
+
+  { "id": "name", "query": "Name", "translation": "Name", "signVideoUrl": "/Glosses/Videos/assets/Name.mp4", "tags": ["common"] },
+  { "id": "next", "query": "Next", "translation": "Next", "signVideoUrl": "/Glosses/Videos/assets/Next.mp4", "tags": ["time"] },
+  { "id": "now", "query": "Now", "translation": "Now", "signVideoUrl": "/Glosses/Videos/assets/Now.mp4", "tags": ["time"] },
+
+  { "id": "of", "query": "Of", "translation": "Of", "signVideoUrl": "/Glosses/Videos/assets/Of.mp4", "tags": ["common"] },
+  { "id": "on", "query": "On", "translation": "On", "signVideoUrl": "/Glosses/Videos/assets/On.mp4", "tags": ["common"] },
+  { "id": "out", "query": "Out", "translation": "Out", "signVideoUrl": "/Glosses/Videos/assets/Out.mp4", "tags": ["common"] },
+
+  { "id": "right", "query": "Right", "translation": "Right", "signVideoUrl": "/Glosses/Videos/assets/Right.mp4", "tags": ["common"] },
+  { "id": "sad", "query": "Sad", "translation": "Sad", "signVideoUrl": "/Glosses/Videos/assets/Sad.mp4", "tags": ["emotion"] },
+  { "id": "see", "query": "See", "translation": "See", "signVideoUrl": "/Glosses/Videos/assets/See.mp4", "tags": ["action"] },
+
+  { "id": "talk", "query": "Talk", "translation": "Talk", "signVideoUrl": "/Glosses/Videos/assets/Talk.mp4", "tags": ["action"] },
+  { "id": "time", "query": "Time", "translation": "Time", "signVideoUrl": "/Glosses/Videos/assets/Time.mp4", "tags": ["time"] },
+  { "id": "to", "query": "To", "translation": "To", "signVideoUrl": "/Glosses/Videos/assets/To.mp4", "tags": ["common"] },
+
+  { "id": "walk", "query": "Walk", "translation": "Walk", "signVideoUrl": "/Glosses/Videos/assets/Walk.mp4", "tags": ["action"] },
+  { "id": "wash", "query": "Wash", "translation": "Wash", "signVideoUrl": "/Glosses/Videos/assets/Wash.mp4", "tags": ["daily"] },
+  { "id": "way", "query": "Way", "translation": "Way", "signVideoUrl": "/Glosses/Videos/assets/Way.mp4", "tags": ["common"] },
+
+  { "id": "what", "query": "What", "translation": "What", "signVideoUrl": "/Glosses/Videos/assets/What.mp4", "tags": ["question"] },
+  { "id": "when", "query": "When", "translation": "When", "signVideoUrl": "/Glosses/Videos/assets/When.mp4", "tags": ["question"] },
+  { "id": "where", "query": "Where", "translation": "Where", "signVideoUrl": "/Glosses/Videos/assets/Where.mp4", "tags": ["question"] },
+  { "id": "who", "query": "Who", "translation": "Who", "signVideoUrl": "/Glosses/Videos/assets/Who.mp4", "tags": ["question"] },
+  { "id": "why", "query": "Why", "translation": "Why", "signVideoUrl": "/Glosses/Videos/assets/Why.mp4", "tags": ["question"] },
+
+  { "id": "with", "query": "With", "translation": "With", "signVideoUrl": "/Glosses/Videos/assets/With.mp4", "tags": ["common"] },
+  { "id": "without", "query": "Without", "translation": "Without", "signVideoUrl": "/Glosses/Videos/assets/Without.mp4", "tags": ["common"] },
+  { "id": "work", "query": "Work", "translation": "Work", "signVideoUrl": "/Glosses/Videos/assets/Work.mp4", "tags": ["common"] },
+  { "id": "world", "query": "World", "translation": "World", "signVideoUrl": "/Glosses/Videos/assets/World.mp4", "tags": ["common"] },
+
+  { "id": "you", "query": "You", "translation": "You", "signVideoUrl": "/Glosses/Videos/assets/You.mp4", "tags": ["pronouns"] },
+  { "id": "your", "query": "Your", "translation": "Your", "signVideoUrl": "/Glosses/Videos/assets/Your.mp4", "tags": ["pronouns"] },
+  { "id": "yourself", "query": "Yourself", "translation": "Yourself", "signVideoUrl": "/Glosses/Videos/assets/Yourself.mp4", "tags": ["pronouns"] }
+]
