@@ -7,7 +7,7 @@ export async function fetchGlossesFromText(englishText: string): Promise<string[
     if (!englishText || typeof englishText !== 'string') return [];
 
     try {
-        const url = process.env.NEXT_PUBLIC_GLOSS_API_URL || 'http://127.0.0.1:8000/convert-text-to-gloss';
+        const url = '/api/gloss';
         
         const response = await fetch(url, {
             method: 'POST', // Assuming standard JSON Body mapping for the FastAPI endpoint
