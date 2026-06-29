@@ -5,11 +5,16 @@ import { createClient } from "@/lib/supabase/client"
 import { LoginBlocker } from "@/components/auth/login-blocker"
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
-    const [authed, setAuthed] = React.useState(false)
-    const [checked, setChecked] = React.useState(false)
+    // DEV BYPASS: Skip auth when running in mock mode
+    const isMockMode = process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
+    
+    const [authed, setAuthed] = React.useState(isMockMode)
+    const [checked, setChecked] = React.useState(isMockMode)
     const supabase = createClient()
 
     React.useEffect(() => {
+        if (isMockMode) return // Skip auth check in mock mode
+        
         console.log("AuthGate: checkAuth started")
         async function checkAuth() {
             try {
@@ -36,7 +41,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             console.log("AuthGate: unsubscribing authListener...")
             authListener.subscription.unsubscribe()
         }
-    }, [supabase])
+    }, [supabase, isMockMode])
 
     return (
         <>
@@ -44,4 +49,4 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
             {checked && !authed ? <LoginBlocker onAuthed={() => setAuthed(true)} /> : null}
         </>
     )
-}
+}
