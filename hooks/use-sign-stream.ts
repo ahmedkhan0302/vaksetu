@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { MediaPipeManager } from "@/lib/mediapipe/mediapipe-manager";
 import { FeatureNormalizer } from "@/lib/mediapipe/feature-normalizer";
 import { drawSkeletonOverlay } from "@/lib/mediapipe/skeleton-renderer";
-import { TranslationState, RawFrameLandmarks } from "@/lib/mediapipe/types";
+import { TranslationState, RawFrameLandmarks, Landmark } from "@/lib/mediapipe/types";
 
 const DEFAULT_WS_URL_PYGRU = process.env.NEXT_PUBLIC_SIGN_API_WS_URL || "ws://127.0.0.1:8000/ws/translate";
 const DEFAULT_HTTP_URL_PYGRU = process.env.NEXT_PUBLIC_SIGN_API_HTTP_URL || "http://127.0.0.1:8000";
@@ -60,6 +60,77 @@ function extractCTCFeatures(raw: RawFrameLandmarks): number[] {
     }
 
     return [...poseArr, ...lhArr, ...rhArr, ...faceArr];
+}
+
+/**
+ * Horizontally mirrors raw MediaPipe landmarks (flips X coordinates and swaps left/right joints/hands)
+ * to align the un-mirrored webcam input with the mirrored training pipeline of the CTC model.
+ */
+function mirrorRawLandmarks(raw: RawFrameLandmarks): RawFrameLandmarks {
+    const flipX = (pts: Landmark[] | null) => {
+        if (!pts) return null;
+        return pts.map((pt) => ({
+            ...pt,
+            x: 1.0 - pt.x,
+        }));
+    };
+
+    // Swap hands and flip X coordinates
+    const left_hand = flipX(raw.right_hand);
+    const right_hand = flipX(raw.left_hand);
+
+    // Flip X coordinates for face and swap symmetric left/right landmarks
+    const face = flipX(raw.face);
+    if (face) {
+        const faceSwaps = [
+            [234, 454], // Left/Right Cheeks
+            [93, 323],   // Left/Right Eye/Jaw boundaries
+            [61, 291],   // Left/Right Mouth corners
+        ];
+        for (const [i1, i2] of faceSwaps) {
+            if (face[i1] && face[i2]) {
+                const temp = face[i1];
+                face[i1] = face[i2];
+                face[i2] = temp;
+            }
+        }
+    }
+
+    // Flip X coordinates for pose and swap left/right joint indices
+    let pose = null;
+    if (raw.pose) {
+        pose = flipX(raw.pose);
+        if (pose) {
+            const poseSwaps = [
+                [1, 4], [2, 5], [3, 6], // Eyes inner/middle/outer
+                [7, 8],                 // Ears
+                [9, 10],                // Mouth corners
+                [11, 12],               // Shoulders
+                [13, 14],               // Elbows
+                [15, 16],               // Wrists
+                [17, 18],               // Pinkies
+                [19, 20],               // Index fingers
+                [21, 22],               // Thumbs
+                [23, 24],               // Hips
+                [25, 26],               // Knees
+                [27, 28],               // Ankles
+                [29, 30],               // Heels
+                [31, 32]                // Feet/toes
+            ];
+            for (const [i1, i2] of poseSwaps) {
+                const temp = pose[i1];
+                pose[i1] = pose[i2];
+                pose[i2] = temp;
+            }
+        }
+    }
+
+    return {
+        left_hand,
+        right_hand,
+        face,
+        pose,
+    };
 }
 
 export function useSignStream(modelType: "pygru" | "ctc" = "pygru") {
@@ -134,8 +205,9 @@ export function useSignStream(modelType: "pygru" | "ctc" = "pygru") {
             const normalizer = getNormalizer();
 
             const raw = mp.processVideoFrame(video, performance.now());
-            const fullFeatures = normalizer.normalizeFrame(raw);
-            const payload = normalizer.formatValidationPayload(raw, fullFeatures);
+            const mirroredRaw = mirrorRawLandmarks(raw);
+            const fullFeatures = normalizer.normalizeFrame(mirroredRaw);
+            const payload = normalizer.formatValidationPayload(mirroredRaw, fullFeatures);
 
             console.log("[useSignStream] Sending feature validation request payload...", payload);
 
@@ -316,7 +388,8 @@ export function useSignStream(modelType: "pygru" | "ctc" = "pygru") {
                         const raw = mp.processVideoFrame(video, now);
                         drawSkeletonOverlay(canvas, video, raw.left_hand, raw.right_hand);
 
-                        const landmarks = extractCTCFeatures(raw);
+                        const mirroredRaw = mirrorRawLandmarks(raw);
+                        const landmarks = extractCTCFeatures(mirroredRaw);
                         frameBufferRef.current.push(landmarks);
                     }
                 }
@@ -343,7 +416,8 @@ export function useSignStream(modelType: "pygru" | "ctc" = "pygru") {
                             const raw = mp.processVideoFrame(video, now);
                             drawSkeletonOverlay(canvas, video, raw.left_hand, raw.right_hand);
 
-                            const features = normalizer.normalizeFrame(raw);
+                            const mirroredRaw = mirrorRawLandmarks(raw);
+                            const features = normalizer.normalizeFrame(mirroredRaw);
                             ws.send(JSON.stringify({
                                 type: "landmarks",
                                 schema_version: "1.0",

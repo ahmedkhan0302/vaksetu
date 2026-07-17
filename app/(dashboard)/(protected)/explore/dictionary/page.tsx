@@ -68,9 +68,9 @@ export default function DictionaryPage() {
             setLoadError(null);
 
             try {
-                // Served from public/dictionary/entries.json
-                const res = await fetch("/dictionary/entries.json", { cache: "no-store" });
-                if (!res.ok) throw new Error(`Failed to load entries.json (${res.status})`);
+                // Fetch dynamic entries from api route
+                const res = await fetch("/api/dictionary", { cache: "no-store" });
+                if (!res.ok) throw new Error(`Failed to load dictionary entries (${res.status})`);
 
                 const data = (await res.json()) as DictionaryEntry[];
                 const videoOnlyData = data.filter((e) => !!e.signVideoUrl);
@@ -194,8 +194,8 @@ export default function DictionaryPage() {
                             <p className="text-sm font-medium text-red-600">Failed to load entries</p>
                             <p className="mt-1 text-sm text-red-600/90">{loadError}</p>
                             <p className="mt-3 text-sm text-muted-foreground">
-                                Make sure the file exists at{" "}
-                                <code className="rounded bg-muted px-1">public/dictionary/entries.json</code>
+                                Make sure the dictionary API is available at{" "}
+                                <code className="rounded bg-muted px-1">/api/dictionary</code>
                             </p>
                         </div>
                     ) : results.length === 0 ? (

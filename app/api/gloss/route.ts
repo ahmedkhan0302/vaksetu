@@ -21,38 +21,48 @@ const FUNCTION_WORDS = new Set([
 
 function loadVocabulary(): { vocabList: string[], vocabSet: Set<string>, multiWordSigns: Set<string> } {
     const vocabSet = new Set<string>();
+    const assetsDir = path.join(process.cwd(), 'public', 'Glosses', 'Videos', 'assets');
     
     try {
-        const fileContent = fs.readFileSync(VOCAB_FILE_PATH, 'utf-8');
-        const lines = fileContent.split('\n');
-        
-        for (let i = 1; i < lines.length; i++) { // Skip header
-            const row = lines[i].split(',')[0]?.trim();
-            if (row && !['sign', '0', ''].includes(row.toLowerCase())) {
-                if (!row.includes('|')) {
-                    const upperSign = row.toUpperCase();
-                    
-                    if (upperSign.includes(':')) {
-                        const parts = upperSign.split(':');
-                        const cleaned = parts[1].trim();
-                        if (cleaned) {
-                            vocabSet.add(cleaned);
-                        }
-                        vocabSet.add(upperSign);
-                    } else {
-                        vocabSet.add(upperSign);
+        if (fs.existsSync(assetsDir)) {
+            const files = fs.readdirSync(assetsDir);
+            for (const file of files) {
+                const ext = path.extname(file).toLowerCase();
+                if (['.mp4', '.mkv', '.webm'].includes(ext)) {
+                    const word = path.basename(file, ext).toUpperCase().trim();
+                    // Skip single letters (A-Z) and digits (0-9) as they are used for fingerspelling/numbers
+                    if (word.length === 1 && /[A-Z0-9]/.test(word)) {
+                        continue;
+                    }
+                    if (word) {
+                        vocabSet.add(word);
                     }
                 }
             }
+        } else {
+            console.error("Assets directory does not exist at:", assetsDir);
         }
     } catch (error) {
-        console.error("Error reading Vocabulary.csv:", error);
+        console.error("Error reading video assets directory:", error);
+    }
+    
+    // In case directory scanning fails, have a static fallback of the known 21 words
+    if (vocabSet.size === 0) {
+        const fallbackWords = [
+            'BOOK', 'BYE', 'CARRY', 'DOCTOR', 'HELP', 'HIM', 'HOUSE',
+            'LANGUAGE', 'ME', 'MONDAY', 'MY', 'ON', 'PEN', 'PRACTICE',
+            'SIGN', 'TABLE', 'TOGETHER', 'UNDERSTAND', 'WE', 'WHAT', 'WHERE'
+        ];
+        for (const w of fallbackWords) {
+            vocabSet.add(w);
+        }
     }
     
     const multiWordSigns = new Set<string>();
     for (const v of vocabSet) {
-        if (v.includes(' ')) {
+        if (v.includes(' ') || v.includes('_')) {
             multiWordSigns.add(v);
+            multiWordSigns.add(v.replace(/_/g, ' '));
         }
     }
     
@@ -67,19 +77,25 @@ function buildPrompt(englishSentence: string, vocabList: string[], multiWordSign
     const vocabStr = vocabList.join(", ");
     const mwExamples = Array.from(multiWordSigns).sort().slice(0, 20).join(", ");
     
+    const hasINoun = vocabList.includes("I_NOUN");
+    const hasThankYou = vocabList.includes("THANK_YOU");
+    
+    const iPronoun = hasINoun ? "I_NOUN" : "I";
+    const tyPronoun = hasThankYou ? "THANK_YOU" : "THANK YOU";
+    
     return `You are an expert Indian Sign Language (ISL) linguist. Convert English sentences into ISL gloss sequences.
 
 === STRICT RULES (you MUST follow ALL of them) ===
 
 RULE 1 - WORD ORDER (SOV): ISL uses Subject-Object-Verb order.
-  English: "I eat food" -> ISL: ["I", "FOOD", "EAT"]
+  English: "I eat food" -> ISL: ["${iPronoun}", "FOOD", "EAT"]
 
 RULE 2 - QUESTION WORDS GO LAST: In questions, the wh-word (WHAT, WHERE, WHO, WHY, WHEN, WHICH, HOW MANY) MUST be the LAST token.
   English: "Where is my bag?" -> ISL: ["MY", "BAG", "WHERE"]
   English: "What is your name?" -> ISL: ["YOUR", "NAME", "WHAT"]
 
 RULE 3 - NEGATION GOES LAST: NOT must be the last token.
-  English: "I am not happy." -> ISL: ["I", "HAPPY", "NOT"]
+  English: "I am not happy." -> ISL: ["${iPronoun}", "HAPPY", "NOT"]
 
 RULE 4 - DROP FUNCTION WORDS: You MUST completely remove these words. NEVER include them in the output. NEVER fingerspell them:
   - Articles: a, an, the
@@ -91,7 +107,7 @@ RULE 4 - DROP FUNCTION WORDS: You MUST completely remove these words. NEVER incl
 
 RULE 5 - HAVE PLACEMENT: When "have" means possession (owning something), keep it and place it at the END of the sentence.
   English: "Do you have my eraser?" -> ISL: ["YOU", "MY", "ERASER", "HAVE"]
-  English: "I have a pen." -> ISL: ["I", "PEN", "HAVE"]
+  English: "I have a pen." -> ISL: ["${iPronoun}", "PEN", "HAVE"]
 
 RULE 6 - ADJECTIVES AFTER NOUN: Adjectives come after the noun they modify.
   English: "the big black cat" -> ISL: ["CAT", "BLACK", "BIG"]
@@ -100,9 +116,9 @@ RULE 7 - LEMMATIZE VERBS: Use base form of verbs (running->RUN, ate->EAT, walked
 
 RULE 8 - POSSESSIVE PRONOUNS: Keep possessive pronouns. "my"->MY, "your"->YOUR, "his"->HIS, "her"->HER, "our"->OUR. Do NOT drop them.
 
-RULE 9 - MULTI-WORD SIGNS: Some signs in the vocabulary are multi-word phrases. You MUST keep them as a SINGLE element in the output list.
+RULE 9 - MULTI-WORD SIGNS: Some signs in the vocabulary are multi-word phrases (which may contain spaces or underscores). You MUST keep them as a SINGLE element in the output list.
   Examples of multi-word signs: ${mwExamples}
-  If the input contains "thank you", output ["THANK YOU"] as ONE element, NOT ["THANK", "YOU"].
+  If the input contains "thank you", output ["${tyPronoun}"] as ONE element, NOT ["THANK", "YOU"].
   If the input contains "climb up", output ["CLIMB UP"] as ONE element.
 
 RULE 10 - VOCABULARY CHECK: You MUST only use words from the vocabulary list. If a word is NOT in the vocabulary, you MUST fingerspell it as individual uppercase letters.
@@ -117,7 +133,7 @@ RULE 11 - OUTPUT FORMAT: Output ONLY a JSON list of uppercase strings. Nothing e
 === FEW-SHOT EXAMPLES ===
 
 English: "Thank you very much"
-Output: ["THANK YOU"]
+Output: ["${tyPronoun}"]
 
 English: "Where is my apple?"
 Output: ["MY", "A", "P", "P", "L", "E", "WHERE"]
@@ -129,7 +145,7 @@ English: "My name is Pratik"
 Output: ["MY", "NAME", "P", "R", "A", "T", "I", "K"]
 
 English: "I am not angry"
-Output: ["I", "ANGRY", "NOT"]
+Output: ["${iPronoun}", "ANGRY", "NOT"]
 
 English: "Do you have my eraser?"
 Output: ["YOU", "MY", "ERASER", "HAVE"]
@@ -147,7 +163,7 @@ English: "How many books do you have?"
 Output: ["YOU", "BOOK", "HOW MANY"]
 
 English: "I do not like this"
-Output: ["I", "L", "I", "K", "E", "NOT"]
+Output: ["${iPronoun}", "L", "I", "K", "E", "NOT"]
 
 === NOW CONVERT THIS ===
 
@@ -200,8 +216,11 @@ function validateAndFixGloss(rawGlossText: string, vocabSet: Set<string>, multiW
         for (let window = 3; window > 0; window--) {
             if (i + window <= tokens.length) {
                 const candidate = tokens.slice(i, i + window).join(" ");
-                if (multiWordSigns.has(candidate)) {
-                    merged.push(candidate);
+                const candidateUnderscored = candidate.replace(/ /g, "_");
+                if (multiWordSigns.has(candidate) || multiWordSigns.has(candidateUnderscored)) {
+                    // Map space-separated words to their underscored version if it exists in the vocabulary
+                    const finalSign = vocabSet.has(candidateUnderscored) ? candidateUnderscored : candidate;
+                    merged.push(finalSign);
                     i += window;
                     matched = true;
                     break;

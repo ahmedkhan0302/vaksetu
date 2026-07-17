@@ -7,13 +7,15 @@ type CameraPreviewProps = {
     facingMode?: "user" | "environment"
     videoRef: React.RefObject<HTMLVideoElement | null>
     canvasRef: React.RefObject<HTMLCanvasElement | null>
+    mirrored?: boolean
 }
 
 export function CameraPreview({
     className,
     facingMode = "user",
     videoRef,
-    canvasRef
+    canvasRef,
+    mirrored = true
 }: CameraPreviewProps) {
     const streamRef = React.useRef<MediaStream | null>(null)
     const [cameraError, setCameraError] = React.useState<string | null>(null)
@@ -37,6 +39,9 @@ export function CameraPreview({
                 await videoRef.current.play()
             }
         } catch (e) {
+            if (e instanceof Error && e.name === "AbortError") {
+                return
+            }
             setCameraError(
                 e instanceof Error ? e.message : "Failed to access the camera."
             )
@@ -60,7 +65,7 @@ export function CameraPreview({
                     ref={videoRef}
                     className={[
                         "h-full w-full object-cover",
-                        facingMode === "user" ? "-scale-x-100" : "",
+                        (facingMode === "user" && mirrored) ? "-scale-x-100" : "",
                     ].join(" ")}
                     muted
                     playsInline
@@ -72,7 +77,7 @@ export function CameraPreview({
                     ref={canvasRef}
                     className={[
                         "absolute inset-0 h-full w-full pointer-events-none object-cover",
-                        facingMode === "user" ? "-scale-x-100" : "",
+                        (facingMode === "user" && mirrored) ? "-scale-x-100" : "",
                     ].join(" ")}
                 />
 

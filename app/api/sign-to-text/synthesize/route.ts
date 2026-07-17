@@ -13,6 +13,13 @@ export async function POST(request: Request) {
             );
         }
 
+        // Check if LLM synthesis is disabled (case-insensitive "false" for usellm or USE_LLM)
+        const useLLMSetting = process.env.usellm || process.env.USE_LLM;
+        if (useLLMSetting && useLLMSetting.toLowerCase() === "false") {
+            console.log("[API sign-to-text/synthesize] LLM synthesis disabled. Returning space-joined glosses.");
+            return NextResponse.json({ sentence: words.join(" ") });
+        }
+
         const sentence = await synthesizeGlossesToEnglish(words);
 
         return NextResponse.json({ sentence });

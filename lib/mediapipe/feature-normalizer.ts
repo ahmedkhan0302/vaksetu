@@ -79,8 +79,8 @@ export class FeatureNormalizer {
                     for (let i = 0; i < 63; i++) {
                         spatial[126 + i] = relLeft[i];
                     }
-                    // Wrist relative distance norm
-                    leftNorm = this.euclideanDistance3D(raw.left_hand[0], noseTip) / safeScale;
+                    // Compute L2 norm of the entire face-relative coordinate vector (63 dimensions)
+                    leftNorm = Math.sqrt(relLeft.reduce((sum, val) => sum + val * val, 0));
                 }
 
                 // Right Hand Face-Relative (Indices 189-251)
@@ -89,8 +89,8 @@ export class FeatureNormalizer {
                     for (let i = 0; i < 63; i++) {
                         spatial[189 + i] = relRight[i];
                     }
-                    // Wrist relative distance norm
-                    rightNorm = this.euclideanDistance3D(raw.right_hand[0], noseTip) / safeScale;
+                    // Compute L2 norm of the entire face-relative coordinate vector (63 dimensions)
+                    rightNorm = Math.sqrt(relRight.reduce((sum, val) => sum + val * val, 0));
                 }
             }
         }
